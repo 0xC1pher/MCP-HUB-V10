@@ -1,29 +1,57 @@
 # ============================================
-# MCP Hub v6.0 - Requirements
-# Python 3.8+ (Recomendado: Python 3.11)
+# MCP HUB V10 + HUB V2 - Unified Requirements
+# Python 3.11+
+# Context Vortex v9 + Specialized MCPs + Memory Gateway
 # ============================================
 
-# Core Dependencies
-# -----------------
-numpy>=1.21.0,<2.0.0
+# Core
+# ----
+numpy>=1.24.0
 msgpack>=1.0.5
 zstandard>=0.19.0
+asyncio>=3.4.3
 
-# Vector Search and Storage (v5)
-# -------------------------------
+# Data Validation & Logging
+# --------------------------
+pydantic>=2.0.0
+structlog>=23.1.0
+python-dateutil>=2.8.0
+
+# Async / Resilience
+# ------------------
+aiosqlite>=0.19.0
+tenacity>=8.2.0
+
+# V6 Storage Layer + Vector Search
+# --------------------------------
+sentence-transformers>=2.2.0
 hnswlib>=0.7.0
 pymp4>=1.4.0
 tiktoken>=0.5.0
-sentence-transformers>=2.2.0
-uvicorn>=0.29.0
-mcp>=0.3.0
+torch>=2.0.0
 
-# Development Dependencies
-# ------------------------
-# pytest>=7.0.0
-# black>=22.0.0
-# flake8>=4.0.0
-# mypy>=0.950
+# MCP Server
+# ----------
+mcp>=0.3.0
+uvicorn[standard]>=0.27.0
+fastapi>=0.109.0
+
+# Vision (FastVLM-WebGPU server-side)
+# ------------------------------------
+playwright>=1.41.0
+
+# Memory Gateway (MemPalace backend)
+# -----------------------------------
+mempalace>=1.0.0
+
+# Development / Testing
+# ---------------------
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
 
 # Documentation
 # -------------

@@ -1,159 +1,265 @@
-# 📖 Manual de Usuario - Context Vortex v9 (MCP Hub)
+# 🌀 MCP HUB V10 — Context Vortex + V2 Workflow
 
-## Guía Completa para Desarrolladores
-
----
-
-## 1. Introducción
-
-### ¿Qué es Context Vortex?
-
-**Context Vortex v9** (anteriormente MCP Hub) es un motor de inteligencia contextual diseñado para potenciar tu desarrollo de software. No es solo un servidor MCP; es un **Orquestador de Memoria y Realidad** que mantiene tu proyecto alineado, consistente y libre de alucinaciones.
-
-### 🆕 Novedades v9 (Antigravity Core)
-
-- **JEPA World Model**: Auditoría factual predictiva que detecta desviaciones del proyecto.
-- **Context Grounding**: Validación contra documentos de visión (`vision.md`, `context.md`).
-- **Persistence Layer**: Memoria a largo plazo para preferencias y habilidades (`skills`).
-- **Quality Guardian**: Guardián de calidad de código siempre activo.
-
-### ¿Para qué sirve?
-
-1. **Memoria Infinita**: Recuerda decisiones, preferencias y estructura del proyecto.
-2. **Anti-Alucinación**: Valida cada propuesta contra la "verdad" del proyecto.
-3. **Gestión Automática**: Detecta qué estás haciendo y organiza tu sesión.
-4. **Búsqueda Profunda**: Entiende semántica, código y constantes.
+> **Motor de inteligencia contextual con MCPs especializados, anti-alucinación JEPA, Code Guardian, Memory Gateway y workflow V2 con checkpoints stakeholder.**
 
 ---
 
-## 2. Instalación y Uso
+## 📋 Descripción
 
-### 2.1 Inicio Rápido
+Sistema MCP (Model Context Protocol) que combina:
+
+| Capa | Origen | Función |
+|------|--------|---------|
+| **Context Vortex v10** | [0xC1pher/MCP-HUB-V10](https://github.com/0xC1pher/MCP-HUB-V10) (main + feature/code-guardian) | Engine con 30+ tools: JEPA World Model, Code Guardian, Visual Monitor, Smart Session Orchestrator, PrettyLogger, Vector Storage MP4 |
+| **MCPs especializados V2** | HUB local | Architect, Backend Developer, Frontend Developer, Tester, Vision Specialist con workflow de checkpoints stakeholder |
+| **Memory Gateway** | HUB local | MemPalace-backed: 7 tools para ADRs, knowledge, tasks, summaries y context builder token-efficient |
+| **Vision Hub** | HUB local | FastVLM-WebGPU (browser-side) + Playwright server-side para análisis multimodal |
+
+---
+
+## 🚀 Inicio Rápido
 
 ```powershell
-# Iniciar el Vórtex
-cd C:\Users\TU_USUARIO\Desktop\CONSULTORIO\yari-medic\mcp-hub-v6
-.\venv\Scripts\python.exe core\mcp_http_server.py
-```
+# Server principal (V10 con todas las tools)
+python -m core.mcp_http_server
 
-### 2.2 Verificación
+# Gateway de memoria (mempalace, segundo proceso MCP)
+python -m core.mcp_memory_gateway
 
-En Antigravity:
-```
-usa ping
-```
-Respuesta: `pong - MCP v7 HTTP server is working!`
-
-### 2.3 Inicialización Recomendada
-
-```
-smart_session_init con project_path="C:\..." context="trabajando en facturación"
+# Workflow V2 con checkpoints
+python tests/integration/test_workflow_with_checkpoints.py
 ```
 
 ---
 
-## 3. Compendio de Herramientas (30 Tools)
+## 📁 Estructura
 
-El arsenal de Context Vortex se divide en 7 módulos especializados.
-
-### 🔷 Core & Retrieval (4)
-| Tool | Descripción |
-|------|-------------|
-| `ping` | Test de latido del sistema. |
-| `get_context` | Recupera contexto semántico e histórico. |
-| `validate_response` | Valida texto contra evidencia específica. |
-| `index_status` | Estadísticas del índice vectorial. |
-
-### 🧠 Smart Session & Management (7)
-| Tool | Descripción |
-|------|-------------|
-| `smart_session_init` | **(Recomendado)** Inicia/recupera sesión automáticamente. |
-| `smart_query` | Consulta con contexto de sesión auto-gestionado. |
-| `get_smart_status` | Estado del orquestador de sesiones. |
-| `create_session` | Creación manual de sesión de trabajo. |
-| `list_sessions` | Listado de sesiones activas. |
-| `get_session_summary` | Resumen de entidades y temas de una sesión. |
-| `delete_session` | Eliminación y limpieza de sesiones. |
-
-### 🛡️ JEPA World Model & Grounding (5)
-| Tool | Descripción |
-|------|-------------|
-| `audit_jepa` | **(Nuevo)** Audita propuestas contra el Modelo de Mundo. |
-| `sync_world_model` | Sincroniza cambios en `context.md`/`vision.md`. |
-| `ground_project_context` | Busca verdad factual en documentos base. |
-| `check_quality` | Analiza código contra principios (DRY, KISS, SOLID). |
-| `get_quality_principles` | Muestra los principios de calidad activos. |
-
-### 💾 Persistence & Skills (2)
-| Tool | Descripción |
-|------|-------------|
-| `memory_tool` | CRUD para preferencias y datos persistentes. |
-| `skills_tool` | Gestión de habilidades reutilizables (Skills). |
-
-### 💻 Code Intelligence (4)
-| Tool | Descripción |
-|------|-------------|
-| `index_code` | Indexación estructural (clases/funciones). |
-| `extended_index` | Indexación profunda (APIs, modelos, constantes). |
-| `search_entity` | Búsqueda precisa de entidades de código. |
-| `extended_search` | Búsqueda de configuraciones y patrones. |
-
-### ⚡ Advanced Processing (6)
-| Tool | Descripción |
-|------|-------------|
-| `process_advanced` | Pipeline completo (RAG + Chunking + Calibration). |
-| `get_knowledge_summary` | Radiografía completa del conocimiento del sistema. |
-| `expand_query` | Genera variantes de búsqueda semántica. |
-| `chunk_document` | Divide documentos inteligentemente. |
-| `optimize_configuration` | Ajusta parámetros basado en uso. |
-| `add_feedback` | Entrena al sistema con tu retroalimentación. |
-
-### 🔧 System & Debug (2)
-| Tool | Descripción |
-|------|-------------|
-| `get_system_status` | Estado de salud de todos los componentes. |
-| `test_colors_flow` | Test visual de la matriz de logs. |
-
----
-
-## 4. Arquitectura de Flujo (JEPA Loop)
-
-```mermaid
-flowchart TD
-    A[User Query] --> B{Smart Orchestrator}
-    B -- Auto-Session --> C[Context Vortex]
-    
-    subgraph WorldModel [JEPA World Model]
-        D[Vision & Rules]
-        E[Code Reality]
-        F[Persistent Memory]
-    end
-    
-    C <--> WorldModel
-    
-    C --> G[Draft Response]
-    G --> H{JEPA Auditor}
-    
-    H -- "Hallucination" --> I[Correction Loop]
-    I --> G
-    
-    H -- "Trusted" --> J[Final Output]
+```
+HUB/
+├── core/
+│   ├── mcp_http_server.py          # V10: server principal (30+ tools)
+│   ├── mcp_memory_gateway.py       # MemPalace gateway (7 tools)
+│   ├── v6.py                       # V6 engine (TOON, sessions, retrieval)
+│   ├── smart_session_orchestrator.py
+│   ├── visual_monitor.py           # Matrix-style visual logs
+│   ├── pretty_logger.py
+│   ├── log_config.py
+│   ├── extended_knowledge.py
+│   ├── advanced_features/
+│   │   ├── code_guardian_mcp.py    # Code quality guardian (nuevo)
+│   │   ├── decorators.py
+│   │   ├── confidence_calibration.py
+│   │   ├── dynamic_chunking.py
+│   │   ├── factual_audit_jepa.py   # JEPA World Model
+│   │   ├── multi_vector_retrieval.py
+│   │   ├── orchestrator.py
+│   │   ├── project_grounding.py
+│   │   ├── project_knowledge.py
+│   │   ├── query_expansion.py
+│   │   ├── virtual_chunk_system.py
+│   │   └── run_system.py
+│   ├── workflow/                   # V2: Checkpoints & markdown reader
+│   │   ├── checklist_manager.py
+│   │   ├── checkpoint_handler.py
+│   │   └── markdown_reader.py
+│   ├── vision/                     # FastVLM server
+│   │   └── vision_hub.py
+│   ├── llm/                        # Model router (Ollama)
+│   │   ├── model_router.py
+│   │   ├── prompt_manager.py
+│   │   └── provider.py
+│   ├── memory/                     # Hybrid: V10 sessions + HUB event-sourcing
+│   │   ├── event_store.py          # HUB: SQLite event store
+│   │   ├── memory_engine.py        # HUB: conflict resolution
+│   │   ├── rollback_manager.py     # HUB: snapshots
+│   │   ├── session_manager.py      # V10: smart sessions
+│   │   ├── skills_manager.py       # V10: skills persistence
+│   │   ├── summarizing_session.py  # V10
+│   │   └── trimming_session.py     # V10
+│   ├── communication/              # HUB: retry/circuit breaker
+│   │   ├── protocol.py
+│   │   └── circuit_breaker.py
+│   ├── performance/                # HUB: psutil monitor
+│   │   └── monitor.py
+│   ├── toon/                       # HUB: token budget
+│   │   └── token_budget.py
+│   ├── storage/                    # V10: MP4 vector storage
+│   │   ├── mp4_storage.py
+│   │   ├── vector_engine.py
+│   │   ├── session_storage.py
+│   │   ├── compressed_mp4_storage.py
+│   │   ├── compressed_storage.py
+│   │   └── memory_handler.py
+│   ├── resolution/                 # V10: contextual resolution
+│   │   ├── contextual_resolver.py
+│   │   └── reference_detector.py
+│   ├── indexing/                   # V10: code indexer
+│   │   ├── code_indexer.py
+│   │   └── entity_tracker.py
+│   └── shared/                     # V10: shared utilities
+│       ├── advanced_scorer.py
+│       ├── safety_system.py
+│       ├── semantic_chunker.py
+│       └── token_manager.py
+│
+├── mcps/                           # HUB: Specialized agents
+│   ├── base_mcp.py
+│   ├── architect_mcp.py
+│   ├── backend_developer_mcp.py    # V2: APIs, DB models
+│   ├── frontend_developer_mcp.py   # V2: UI components
+│   ├── developer_mcp.py            # Legacy: kept for compat
+│   ├── tester_mcp.py
+│   ├── vision_specialist_mcp.py
+│   ├── vision_specialist_mcp_optional.py  # Lazy-loaded
+│   └── contracts/
+│       ├── architect_contracts.py
+│       ├── backend_developer_contracts.py
+│       ├── frontend_developer_contracts.py
+│       ├── developer_contracts.py  # Legacy
+│       └── tester_contracts.py
+│
+├── config/
+│   ├── v6_config.json              # V10 storage config
+│   ├── server_config.json
+│   ├── toon/                       # HUB: Specialized TOONs
+│   │   ├── architect.toon
+│   │   ├── backend_developer.toon
+│   │   ├── frontend_developer.toon
+│   │   ├── developer.toon           # Legacy
+│   │   ├── tester.toon
+│   │   ├── orchestrator.toon
+│   │   └── global_rules.toon
+│   └── ...
+│
+├── fastvlm-webgpu/                 # HUB: Browser-side vision client
+│   ├── index.html
+│   ├── js/main.js
+│   └── styles/main.css
+│
+├── data/                           # Runtime data (gitignored)
+│   ├── sessions/
+│   ├── project_context/
+│   ├── skills/
+│   ├── memories/
+│   ├── smart_sessions/
+│   ├── extended_knowledge/
+│   └── *.mp4 (vector storage)
+│
+├── tests/                          # V10 tests + HUB V2 tests
+│   ├── test_mcp_connection.py      # V10
+│   ├── test_v6_only.py             # V10
+│   ├── test_protocol.py            # V10
+│   ├── integration/                # HUB V2
+│   │   ├── test_workflow_simple.py
+│   │   └── test_workflow_with_checkpoints.py
+│   └── unit/                       # HUB
+│       ├── test_circuit_breaker.py
+│       ├── test_event_store.py
+│       ├── test_memory_engine.py
+│       └── ...
+│
+└── docs/                           # V10 documentation
+    ├── V8_USER_GUIDE.md
+    ├── V8_TECHNICAL_DOCUMENTATION.md
+    ├── V8_CHANGES_SUMMARY.md
+    └── diagrama.md
 ```
 
 ---
 
-## 5. FAQ Rápido
+## 🔧 Tools Expuestas (V10)
 
-**¿Cuántas herramientas tiene?**
-30 herramientas especializadas, desde gestión de memoria hasta auditoría predictiva.
+### Core & Retrieval
+- `ping`, `get_context`, `validate_response`, `index_status`
 
-**¿Qué es JEPA?**
-Joint-Embedding Predictive Architecture. Es el cerebro que permite al sistema "predecir" si una respuesta tiene sentido dentro de tu proyecto, evitando alucinaciones.
+### Smart Session
+- `smart_session_init`, `smart_query`, `get_smart_status`
+- `create_session`, `list_sessions`, `get_session_summary`, `delete_session`
 
-**¿Dónde están mis datos?**
-Todo vive localmente en `data/` (vectores, sesiones, índices). Tu privacidad es absoluta.
+### JEPA World Model & Grounding
+- `audit_jepa`, `sync_world_model`, `ground_project_context`
+- `check_quality`, `get_quality_principles`
+
+### Code Guardian (nuevo)
+- `check_code_creation`, `check_code_modification`, `check_code_deletion`
+
+### Persistence & Skills
+- `memory_tool`, `skills_tool`
+
+### Code Intelligence
+- `index_code`, `extended_index`, `search_entity`, `extended_search`
+
+### Advanced Processing
+- `process_advanced`, `get_knowledge_summary`, `expand_query`
+- `chunk_document`, `optimize_configuration`, `add_feedback`
+
+### System
+- `get_system_status`, `test_colors_flow`
+
+## 🧠 Memory Gateway (7 tools)
+
+- `gateway_status` — Estado del gateway
+- `gateway_set_active_feature` — Define feature activa
+- `gateway_add_adr` — Registra ADR (Architecture Decision Record)
+- `gateway_add_knowledge` — Conocimiento estable del proyecto
+- `gateway_add_task` — Tareas de desarrollo con estado
+- `gateway_compress_session` — Comprime sesión incrementalmente
+- `gateway_build_context` — **Context builder** (queries ADRs/tasks/knowledge y devuelve prompt compacto)
 
 ---
 
-**Context Vortex v9.0.2** | *Antigravity Edition* | 2026
+## 🔄 Flujo V2 con Checkpoints
 
+```
+Usuario → [requirements.md] → OrchestratorV2 (TODO: portar a V10)
+  ↓
+MarkdownReader → parse requerimientos
+  ↓
+ChecklistManager → crea tareas
+  ↓
+Tarea 1: ArchitectMCP → checkpoint → user APPROVE
+Tarea 2: BackendDeveloperMCP → checkpoint → user APPROVE
+Tarea 3: FrontendDeveloperMCP → checkpoint → user APPROVE
+Tarea 4: TesterMCP → checkpoint → user APPROVE
+```
+
+El `core/orchestrator_v2.py` necesita ser portado para integrarse con el V10 server. Por ahora los tests V2 están en `tests/integration/test_workflow_with_checkpoints.py` y funcionan standalone.
+
+---
+
+## 📦 Instalación
+
+```bash
+pip install -r requirements.txt
+playwright install chromium
+```
+
+Para el Memory Gateway:
+```bash
+pip install mempalace
+```
+
+---
+
+## 🌿 Branches
+
+- `main` — Stable (V10 base + Code Guardian merged)
+- `origin/feature/code-guardian-mcp-integration` — Ya mergeado en main
+
+---
+
+## 📚 Documentación Adicional
+
+- [V10 README original](README.md) (en este mismo directorio)
+- [V10 Anti-Alucinación](V9_ANTI_ALUCINACION_ANALISIS.md)
+- [V8 User Guide](docs/V8_USER_GUIDE.md)
+- [V8 Technical](docs/V8_TECHNICAL_DOCUMENTATION.md)
+- [HUB V2 Workflow](IMPLEMENTACION_FLUJO_CORRECTO.md)
+- [HUB V2 Workflow (agent)](.agent/workflows/NUEVO_FLUJO_CORRECTO.md)
+- [Migración docs](FLUJO_DOCUMENTACION_STATUS.md)
+- [Feature tracking](feat.md)
+
+---
+
+**Versión**: V10 + HUB V2 merge  
+**Última actualización**: 2026-06-03

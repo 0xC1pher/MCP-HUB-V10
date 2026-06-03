@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FastVLM WebGPU - Vision Hub</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2"></script>
+</head>
+<body>
+  <div id="app-container" class="glass-container draggable">
+    <div class="header">
+      <h1>🔥 FastVLM WebGPU Vision Hub</h1>
+      <button id="play-pause-btn" class="control-btn">▶️ Start</button>
+    </div>
+    
+    <div id="video-container">
+      <video id="webcam-video" autoplay muted playsinline style="display: none;"></video>
+      <canvas id="video-canvas"></canvas>
+    </div>
+    
+    <div id="caption-display" class="glass-panel">
+      <h3>Live Caption:</h3>
+      <p id="caption-text">Click Start to begin captioning...</p>
+    </div>
+    
+    <div id="prompt-container" class="glass-panel draggable">
+      <h4>Custom Prompt:</h4>
+      <input type="text" id="prompt-input" placeholder="e.g., What colors do you see? Describe emotions.">
+      <button id="send-prompt-btn">Send</button>
+      <div id="suggestions">
+        <span class="suggestion-chip" data-prompt="Describe what you see.">Describe scene</span>
+        <span class="suggestion-chip" data-prompt="Identify objects.">Objects</span>
+        <span class="suggestion-chip" data-prompt="Read any text.">Read text</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
