@@ -1,8 +1,0 @@
-[#GLOBAL_RULES]
-- No cambies la lógica ni el flujo existente de la aplicación.
-- Antes de proponer cambios, revisa el código relevante para entender qué módulos, funciones o clases ya existen.
-- Si una implementación está incompleta, continúa y complétala en lugar de reemplazarla.
-- Reutiliza código existente: evita duplicar lógica, funciones o helpers.
-- Prioriza escalabilidad, robustez, legibilidad y mantenibilidad.
-- Respeta contratos actuales (firmas, tipos, efectos colaterales) salvo bug evidente.
-- Cuando falte información sobre negocio/proceso, formula preguntas explícitas al stakeholder en lugar de asumir.

@@ -34,23 +34,14 @@ except ImportError:
     ADVANCED_AVAILABLE = False
     DynamicChunker = QueryExpander = ConfidenceCalibrator = AdvancedConfig = ProcessingMode = None
 
-# V6 components
-try:
-    from memory import SessionManager, SessionType, SessionStrategy
-    from memory.session_manager import SessionManager as SM
-    from indexing import CodeIndexer, EntityTracker
-    from resolution import ContextualResolver, ReferenceDetector
-    from shared.token_manager import TokenBudgetManager, get_token_manager
-    from memory.skills_manager import SkillsManager
-    from storage.memory_handler import MemoryHandler
-    from extended_knowledge import ExtendedKnowledgeIndexer
-    from smart_session_orchestrator import SmartSessionOrchestrator
-    V6_COMPONENTS_AVAILABLE = True
-except ImportError as e:
-    import traceback
-    logger.error(f"V6 components import FAILED: {e}")
-    logger.error(traceback.format_exc())
-    V6_COMPONENTS_AVAILABLE = False
+# Legacy V2 modules (memory, indexing, resolution) have been purged in V11 transition.
+V6_COMPONENTS_AVAILABLE = False
+SessionManager = SessionType = SessionStrategy = SM = None
+CodeIndexer = EntityTracker = None
+ContextualResolver = ReferenceDetector = None
+TokenBudgetManager = get_token_manager = None
+SkillsManager = MemoryHandler = None
+ExtendedKnowledgeIndexer = SmartSessionOrchestrator = None
 
 def safe_jepa_flow(step: str, message: str):
     if hasattr(logger, 'jepa_flow'):
@@ -107,6 +98,17 @@ class MCPServerV6:
         self.query_count = 0
         self.start_time = time.time()
         self.audit_log = []
+
+        # Initialize legacy components to None
+        self.session_manager = None
+        self.code_indexer = None
+        self.entity_tracker = None
+        self.contextual_resolver = None
+        self.token_manager = None
+        self.skills_manager = None
+        self.memory_handler = None
+        self.extended_knowledge = None
+        self.orchestrator = None
 
         # V6 components
         if V6_COMPONENTS_AVAILABLE:
@@ -473,6 +475,8 @@ class MCPServerV6:
     # ── Session Methods ──
 
     async def _create_session(self, args: Dict) -> Dict:
+        if not self.session_manager:
+            return {'content': [{'type': 'text', 'text': 'Session manager not available (legacy V2 module is purged)'}], '_meta': {'error': True}}
         session_id = args.get('session_id')
         session_type = args.get('session_type', 'general')
         strategy = args.get('strategy', 'trimming')
@@ -482,6 +486,8 @@ class MCPServerV6:
             '_meta': {'session_id': session_id}}
 
     async def _get_session_summary(self, args: Dict) -> Dict:
+        if not self.session_manager:
+            return {'content': [{'type': 'text', 'text': 'Session manager not available (legacy V2 module is purged)'}], '_meta': {'error': True}}
         session_id = args.get('session_id')
         summary = self.session_manager.get_session_summary(session_id)
         if not summary:
@@ -489,6 +495,8 @@ class MCPServerV6:
         return {'content': [{'type': 'text', 'text': json.dumps(summary, indent=2)}], '_meta': summary}
 
     async def _list_sessions(self, args: Dict) -> Dict:
+        if not self.session_manager:
+            return {'content': [{'type': 'text', 'text': 'Session manager not available (legacy V2 module is purged)'}], '_meta': {'error': True}}
         sessions = self.session_manager.list_sessions()
         if not sessions:
             text = "No sessions found."
@@ -497,6 +505,8 @@ class MCPServerV6:
         return {'content': [{'type': 'text', 'text': text}]}
 
     async def _delete_session(self, args: Dict) -> Dict:
+        if not self.session_manager:
+            return {'content': [{'type': 'text', 'text': 'Session manager not available (legacy V2 module is purged)'}], '_meta': {'error': True}}
         session_id = args.get('session_id')
         deleted = self.session_manager.delete_session(session_id)
         return {'content': [{'type': 'text', 'text':
@@ -505,6 +515,8 @@ class MCPServerV6:
     # ── Code Indexing ──
 
     async def _index_code(self, args: Dict) -> Dict:
+        if not self.code_indexer:
+            return {'content': [{'type': 'text', 'text': 'Code indexer not available (legacy V2 module is purged)'}], '_meta': {'error': True}}
         directory = args.get('directory')
         recursive = args.get('recursive', True)
         count = self.code_indexer.index_directory(directory, recursive)
@@ -515,6 +527,8 @@ class MCPServerV6:
             '_meta': stats}
 
     async def _search_entity(self, args: Dict) -> Dict:
+        if not self.code_indexer:
+            return {'content': [{'type': 'text', 'text': 'Code indexer not available (legacy V2 module is purged)'}], '_meta': {'error': True}}
         name = args.get('name')
         entity_type = args.get('entity_type', 'any')
         results = []
@@ -532,6 +546,8 @@ class MCPServerV6:
     # ── Memory & Skills ──
 
     def _handle_memory_tool(self, args: Dict) -> Dict:
+        if not self.memory_handler:
+            return {'content': [{'type': 'text', 'text': 'Memory handler not available (legacy V2 module is purged)'}], '_meta': {'error': True}}
         cmd = args.get('command')
         fp = args.get('file_path')
         content = args.get('content', '')
@@ -551,6 +567,8 @@ class MCPServerV6:
             return {'content': [{'type': 'text', 'text': f"Error: {e}"}]}
 
     def _handle_skills_tool(self, args: Dict) -> Dict:
+        if not self.skills_manager:
+            return {'content': [{'type': 'text', 'text': 'Skills manager not available (legacy V2 module is purged)'}], '_meta': {'error': True}}
         cmd = args.get('command')
         skill_id = args.get('skill_id')
         content = args.get('content', '')
@@ -569,6 +587,8 @@ class MCPServerV6:
     # ── Extended Knowledge ──
 
     def _handle_extended_index(self, args: Dict) -> Dict:
+        if not self.extended_knowledge:
+            return {'content': [{'type': 'text', 'text': 'Extended knowledge indexer not available (legacy V2 module is purged)'}], '_meta': {'error': True}}
         directory = args.get('directory')
         recursive = args.get('recursive', True)
         counts = self.extended_knowledge.index_directory_extended(directory, recursive)
@@ -576,11 +596,15 @@ class MCPServerV6:
             f"Extended indexing complete: {json.dumps(counts)}"}], '_meta': counts}
 
     def _handle_extended_search(self, args: Dict) -> Dict:
+        if not self.extended_knowledge:
+            return {'content': [{'type': 'text', 'text': 'Extended knowledge indexer not available (legacy V2 module is purged)'}], '_meta': {'error': True}}
         query = args.get('query', '')
         results = self.extended_knowledge.search_extended(query)
         return {'content': [{'type': 'text', 'text': json.dumps(results, indent=2)}]}
 
     def _handle_get_knowledge_summary(self, args: Dict) -> Dict:
+        if not self.extended_knowledge:
+            return {'content': [{'type': 'text', 'text': 'Extended knowledge indexer not available (legacy V2 module is purged)'}], '_meta': {'error': True}}
         summary = self.extended_knowledge.get_knowledge_summary()
         return {'content': [{'type': 'text', 'text': summary}]}
 
@@ -667,7 +691,7 @@ class MCPServerV6:
         return {'content': [{'type': 'text', 'text': 'Configuration optimized.'}]}
 
     def _handle_get_smart_status(self, args: Dict) -> Dict:
-        stats = self.orchestrator.get_statistics() if hasattr(self, 'orchestrator') else {}
+        stats = self.orchestrator.get_statistics() if self.orchestrator else {}
         return {'content': [{'type': 'text', 'text': json.dumps(stats, indent=2)}]}
 
     # ── Audit ──

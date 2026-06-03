@@ -13,25 +13,48 @@ log_dir = Path(__file__).parent.parent / "logs"
 log_dir.mkdir(exist_ok=True)
 log_file = log_dir / "mcp_launcher.log"
 
+# Stream handler that handles encoding issues gracefully on Windows consoles
+class SafeStreamHandler(logging.StreamHandler):
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            stream = self.stream
+            try:
+                stream.write(msg + self.terminator)
+            except UnicodeEncodeError:
+                # Fallback to ascii or replacement characters
+                stream.write(msg.encode('ascii', errors='replace').decode('ascii') + self.terminator)
+            self.flush()
+        except Exception:
+            self.handleError(record)
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(log_file),
-        logging.StreamHandler(sys.stderr)
+        logging.FileHandler(log_file, encoding='utf-8'),
+        SafeStreamHandler(sys.stderr)
     ]
 )
 logger = logging.getLogger(__name__)
 
 
-def check_dependencies():
+def check_dependencies(version='v6'):
     """Check if all required dependencies are installed"""
-    required = [
-        'sentence_transformers',
-        'hnswlib',
-        'numpy',
-        'torch'
-    ]
+    if version == 'v5':
+        required = [
+            'sentence_transformers',
+            'hnswlib',
+            'numpy',
+            'torch'
+        ]
+    else:
+        required = [
+            'numpy',
+            'mempalace',
+            'mcp',
+            'pydantic'
+        ]
     
     missing = []
     for module in required:
@@ -43,7 +66,7 @@ def check_dependencies():
             logger.error(f"✗ {module} NO disponible")
     
     if missing:
-        logger.error(f"Dependencias faltantes: {', '.join(missing)}")
+        logger.error(f"Dependencias faltantes para {version.upper()}: {', '.join(missing)}")
         logger.error("Ejecuta: pip install " + " ".join(missing))
         return False
     
@@ -113,7 +136,7 @@ def main():
         
         # Check dependencies
         logger.info("Verificando dependencias...")
-        if not check_dependencies():
+        if not check_dependencies(version):
             logger.error("Faltan dependencias críticas. Abortando.")
             sys.exit(1)
         

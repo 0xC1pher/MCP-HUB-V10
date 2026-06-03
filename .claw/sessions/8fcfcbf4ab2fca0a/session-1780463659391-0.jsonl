@@ -1,0 +1,2 @@
+{"created_at_ms":1780463659390,"model":"openai/gpt-oss-120b","session_id":"session-1780463659391-0","type":"session_meta","updated_at_ms":1780463659390,"version":1,"workspace_root":"C:\\Users\\Admin\\Desktop\\workspace\\HUB"}
+{"message":{"blocks":[{"text":"write a python function to reverse a string","type":"text"}],"role":"user"},"type":"message"}

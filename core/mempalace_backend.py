@@ -87,15 +87,81 @@ def search(query: str, wing: str = None, room: str = None,
            limit: int = 10, max_distance: float = 1.5) -> List[Dict]:
     """Semantic search. Returns list of dicts with drawer content + score."""
     fn = _tool("tool_search")
-    return fn(query=query, wing=wing, room=room,
-              limit=limit, max_distance=max_distance)
+    res = fn(query=query, wing=wing, room=room,
+             limit=limit, max_distance=max_distance)
+    if isinstance(res, dict) and "results" in res:
+        hits = res["results"]
+        for h in hits:
+            # Map keys for compatibility
+            if "text" in h and "content" not in h:
+                h["content"] = h["text"]
+            if "content" in h and "text" not in h:
+                h["text"] = h["content"]
+            # Map score/similarity for compatibility
+            if "similarity" in h and "score" not in h:
+                h["score"] = h["similarity"]
+            # Generate deterministic drawer ID if missing
+            if "id" not in h:
+                w = h.get("wing", wing or "unknown")
+                r = h.get("room", room or "unknown")
+                text = h.get("text", "")
+                h["id"] = _drawer_id(w, r, text)
+            if "drawer_id" not in h:
+                h["drawer_id"] = h["id"]
+        return hits
+    return []
 
 
 def list_drawers(wing: str = None, room: str = None,
                  limit: int = 100, offset: int = 0) -> List[Dict]:
     """List drawers. Returns list of drawer metadata dicts."""
     fn = _tool("tool_list_drawers")
-    return fn(wing=wing, room=room, limit=limit, offset=offset)
+    res = fn(wing=wing, room=room, limit=limit, offset=offset)
+    if isinstance(res, dict) and "drawers" in res:
+        return res["drawers"]
+    return res
+
+
+def get_drawers_full(wing: str = None, room: str = None,
+                     limit: int = 100) -> List[Dict]:
+    """Fetch drawers with full content directly from ChromaDB collection."""
+    mp = _get_mp()
+    col = mp._get_collection()
+    if not col:
+        return []
+    
+    where = None
+    conditions = []
+    if wing:
+        conditions.append({"wing": wing})
+    if room:
+        conditions.append({"room": room})
+    if len(conditions) == 1:
+        where = conditions[0]
+    elif len(conditions) > 1:
+        where = {"$and": conditions}
+        
+    kwargs = {"include": ["documents", "metadatas"], "limit": limit}
+    if where:
+        kwargs["where"] = where
+    try:
+        result = col.get(**kwargs)
+        drawers = []
+        for i, did in enumerate(result["ids"]):
+            meta = result["metadatas"][i] or {}
+            doc = result["documents"][i] or ""
+            drawers.append({
+                "drawer_id": did,
+                "id": did,
+                "wing": meta.get("wing", ""),
+                "room": meta.get("room", ""),
+                "content": doc,
+                "metadata": meta
+            })
+        return drawers
+    except Exception as e:
+        logger.warning("Failed to get full drawers directly", error=str(e))
+        return []
 
 
 def get_drawer(drawer_id: str) -> Optional[Dict]:
@@ -201,7 +267,7 @@ class MempalaceSession:
         if self._loaded:
             return True
         room = f"{Room.SESSIONS}_{self.session_id}"
-        drawers = list_drawers(wing=self.wing, room=room, limit=500)
+        drawers = get_drawers_full(wing=self.wing, room=room, limit=500)
         if not drawers:
             return False
         self.turns = []
@@ -292,12 +358,14 @@ class MempalaceSessionManager:
 
     def list_sessions(self) -> List[str]:
         """List all session IDs."""
-        drawers = list_drawers(wing=self.wing, room=Room.SESSIONS, limit=200)
+        fn = _tool("tool_list_rooms")
+        res = fn(wing=self.wing)
+        rooms = res.get("rooms", {})
         ids = set()
-        for d in drawers:
-            rid = d.get("metadata", {}).get("room", "")
-            if rid.startswith(Room.SESSIONS + "_"):
-                sid = rid[len(Room.SESSIONS) + 1:]
+        prefix = f"{Room.SESSIONS}_"
+        for rname in rooms.keys():
+            if rname.startswith(prefix):
+                sid = rname[len(prefix):]
                 if sid:
                     ids.add(sid)
         return sorted(ids)
@@ -307,7 +375,14 @@ class MempalaceSessionManager:
         room = f"{Room.SESSIONS}_{session_id}"
         drawers = list_drawers(wing=self.wing, room=room, limit=500)
         for d in drawers:
-            delete_drawer(d["id"])
+            delete_drawer(d.get("drawer_id") or d.get("id"))
+            
+        # Also delete metadata drawers if any
+        meta_room = f"session_meta_{session_id}"
+        meta_drawers = list_drawers(wing=self.wing, room=meta_room, limit=100)
+        for d in meta_drawers:
+            delete_drawer(d.get("drawer_id") or d.get("id"))
+            
         self.active_sessions.pop(session_id, None)
         return True
 
@@ -316,13 +391,31 @@ class MempalaceSessionManager:
         session = self.load_session(session_id)
         if not session:
             return None
-        return {
+            
+        # Load external metadata if any
+        meta = {}
+        results = search(query=session_id, wing=self.wing,
+                         room=f"session_meta_{session_id}", limit=1)
+        if results:
+            try:
+                meta = json.loads(results[0].get("content", "{}"))
+            except (json.JSONDecodeError, TypeError):
+                pass
+                
+        # Merge session.metadata and external meta
+        merged_meta = dict(session.metadata)
+        merged_meta.update(meta)
+        
+        summary = {
             "session_id": session_id,
-            "metadata": session.metadata,
+            "metadata": merged_meta,
             "turn_count": len(session.turns),
-            "created_at": session.metadata.get("created_at"),
-            "last_updated": session.metadata.get("last_updated"),
+            "created_at": merged_meta.get("created_at"),
+            "last_updated": merged_meta.get("last_updated"),
         }
+        # Flat merge for legacy test compatibility
+        summary.update(merged_meta)
+        return summary
 
 
 # ---------------------------------------------------------------------------

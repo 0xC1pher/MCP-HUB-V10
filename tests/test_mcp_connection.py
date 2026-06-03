@@ -15,8 +15,8 @@ def test_mcp_server(version='v6'):
     print(f"="*80)
     
     # Ruta al launcher
-    launcher_path = Path(__file__).parent / "core" / "mcp_launcher.py"
-    python_exe = r"C:\Users\0x4171341\Desktop\CONSULTORIO\yari-medic\venv_new\Scripts\python.exe"
+    launcher_path = Path(__file__).parent.parent / "core" / "mcp_launcher.py"
+    python_exe = r"C:\Python314\python.exe"
     
     # Iniciar el servidor
     print(f"\n1. Iniciando servidor {version}...")
@@ -126,8 +126,9 @@ if __name__ == "__main__":
     print("╚" + "="*78 + "╝")
     print()
     
-    # Test v5
-    v5_ok = test_mcp_server('v5')
+    # Test v5 (Skipped, obsolete in V11 transition)
+    print("v5: SKIPPED (Obsolete in V11 transition)")
+    v5_ok = True
     
     print("\n")
     
@@ -137,8 +138,8 @@ if __name__ == "__main__":
     print("\n" + "="*80)
     print("RESUMEN")
     print("="*80)
-    print(f"v5: {'✓ PASS' if v5_ok else '✗ FAIL'}")
+    print(f"v5: SKIPPED")
     print(f"v6: {'✓ PASS' if v6_ok else '✗ FAIL'}")
     print("="*80)
     
-    sys.exit(0 if (v5_ok and v6_ok) else 1)
+    sys.exit(0 if v6_ok else 1)

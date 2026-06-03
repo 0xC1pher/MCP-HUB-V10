@@ -15,8 +15,8 @@ def test_v6():
     print("="*80)
     
     # Ruta al launcher
-    launcher_path = Path(__file__).parent / "core" / "mcp_launcher.py"
-    python_exe = r"C:\Users\0x4171341\Desktop\CONSULTORIO\yari-medic\venv_new\Scripts\python.exe"
+    launcher_path = Path(__file__).parent.parent / "core" / "mcp_launcher.py"
+    python_exe = r"C:\Python314\python.exe"
     
     # Iniciar el servidor v6
     print("\n1. Iniciando servidor v6...")

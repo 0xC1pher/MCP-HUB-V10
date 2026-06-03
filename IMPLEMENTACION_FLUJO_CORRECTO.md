@@ -1,311 +1,251 @@
-# ✅ IMPLEMENTACIÓN COMPLETADA: Flujo Correcto con Checkpoints
+# ESTADO ACTUAL: Flujo de Desarrollo V2 → Superpowers
 
-**Fecha**: 2025-12-02  
-**Status**: ✅ COMPLETADO  
-**Versión**: 2.0
-
----
-
-## 🎉 Resumen de Implementación
-
-Se ha implementado exitosamente el **flujo correcto** del sistema MCP Hub que emula un equipo real de desarrollo con validación del stakeholder en cada paso.
-
-## ✨ Cambios Implementados
-
-### 1. 📜 Archivos TOON por Rol (Instrucciones Especializadas)
-
-✅ **Creados**:
-- `config/toon/backend_developer.toon` - Instrucciones para desarrollo backend
-- `config/toon/frontend_developer.toon` - Instrucciones para desarrollo frontend
-
-✅ **Conservados**:
-- `config/toon/architect.toon` - Existente
-- `config/toon/developer.toon` - Existente (legacy)
-- `config/toon/tester.toon` - Existente
-- `config/toon/orchestrator.toon` - Existente
-- `config/toon/global_rules.toon` - Existente
-
-### 2. 🤖 MCPs Especializados
-
-✅ **Nuevos MCPs**:
-- `mcps/backend_developer_mcp.py` - Especializado en APIs, servicios, modelos de datos
-- `mcps/frontend_developer_mcp.py` - Especializado en UI, componentes, estilos
-
-✅ **MCPs Existentes** (Conservados):
-- `mcps/architect_mcp.py`
-- `mcps/developer_mcp.py` (legacy)
-- `mcps/tester_mcp.py`
-- `mcps/vision_specialist_mcp.py`
-
-### 3. 📋 Contratos Pydantic
-
-✅ **Nuevos Contratos**:
-- `mcps/contracts/backend_developer_contracts.py`
-  - `BackendDeveloperInputContract`
-  - `BackendDeveloperOutputContract`
-  - `APIEndpoint`, `DatabaseModel`, `ServiceDefinition`
-  - `BackendCodeFile`
-
-- `mcps/contracts/frontend_developer_contracts.py`
-  - `FrontendDeveloperInputContract`
-  - `FrontendDeveloperOutputContract`
-  - `UIComponent`, `StyleDefinition`, `APIIntegration`
-  - `FrontendCodeFile`
-
-✅ **Actualizado**:
-- `mcps/contracts/__init__.py` - Exporta todos los contratos nuevos
-
-### 4. 🔄 Sistema de Workflow
-
-✅ **Componentes Nuevos**:
-- `core/workflow/markdown_reader.py`
-  - Lee archivos .md con requerimientos
-  - Parsea secciones, tareas, user stories
-  - Extrae prioridades y criterios de aceptación
-  - Identifica code blocks y metadata
-
-- `core/workflow/checklist_manager.py`
-  - Gestiona tareas con estados (pending, in_progress, waiting_approval, approved, rejected)
-  - Valida dependencias entre tareas
-  - Genera reportes de progreso
-  - Permite aprobación/rechazo del stakeholder
-
-- `core/workflow/checkpoint_handler.py`
-  - Crea checkpoints de validación
-  - Captura decisiones del stakeholder
-  - Gestiona rollback a puntos anteriores
-  - Mantiene historial completo
-
-### 5. 🎯 Orchestrator V2
-
-✅ **Nuevo Orquestador**:
-- `core/orchestrator_v2.py`
-  - Flujo correcto: Architect → Backend → Frontend → Tester
-  - Checkpoint después de cada tarea
-  - Validación stakeholder obligatoria
-  - Soporte para archivos markdown
-  - Soporte para descripciones simples
-  - Gestión de dependencias entre tareas
-  - Rollback automático si es necesario
-
-✅ **Funcionalidades**:
-- `execute_from_markdown(requirements_file)` - Lee requerimientos desde .md
-- `execute_feature_request(description)` - Flujo desde descripción simple
-- Modo interactivo vs no-interactivo (para tests)
-- Creación automática de checklist basado en requerimientos
-
-### 6. 🧪 Tests
-
-✅ **Tests Nuevos**:
-- `tests/integration/test_workflow_with_checkpoints.py`
-  - Test completo del flujo con markdown
-  - Test de flujo simple con descripción
-  - Validación de checkpoints
-  - Validación de progreso y aprobaciones
-  - Crea archivo .md de prueba automáticamente
-
-### 7. 📚 Documentación
-
-✅ **Documentación Creada**:
-- `docs/FLUJO_CORRECTO.md`
-  - Diagrama completo del flujo
-  - Comparación flujo anterior vs correcto
-  - Ejemplos de uso
-  - Formato de archivos markdown
-  - Estados de tareas y checkpoints
-
-- `.agent/workflows/NUEVO_FLUJO_CORRECTO.md`
-  - Plan de implementación detallado
-  - Pasos ejecutados
-  - Estructura de archivos
-
-✅ **Documentación Actualizada**:
-- `README.md` - Actualizado con arquitectura V2 y flujos
-
-## 🔍 Diferencias Clave vs Flujo Anterior
-
-| Característica | ❌ Anterior | ✅ Nuevo |
-|----------------|-------------|----------|
-| **Validación Usuario** | Solo al final | Después de cada tarea |
-| **Roles Separados** | Developer genérico | Backend + Frontend especializados |
-| **Checklist** | No existe | Sí, con estados y dependencias |
-| **Rollback** | Solo en falla total | Por tarea específica |
-| **Stakeholder Input** | No | Sí, constante |
-| **Leer Markdown** | No | Sí, con parser completo |
-| **TOON por Rol** | Genérico | Especializado por rol |
-| **Flujo Real** | Básico | Emula equipo Agile |
-
-## 🚀 Cómo Usar el Nuevo Sistema
-
-### Desde Archivo Markdown
-
-```python
-import asyncio
-from mcp_hub_v6 import create_mcp_hub
-from core.orchestrator_v2 import OrchestratorV2
-
-async def main():
-    hub = create_mcp_hub()
-    orch = OrchestratorV2(hub)
-    await orch.start()
-    
-    # Ejecutar desde markdown
-    result = await orch.execute_from_markdown(
-        "requirements.md",
-        interactive=True  # Pide aprobación en cada paso
-    )
-    
-    print(f"Estado: {result['final_status']}")
-    print(f"Tareas completadas: {len(result['tasks_completed'])}")
-    print(f"Checkpoints: {len(result['checkpoints'])}")
-    
-    await orch.stop()
-
-asyncio.run(main())
-```
-
-### Desde Descripción Simple
-
-```python
-result = await orch.execute_feature_request(
-    "Sistema de chat en tiempo real con WebSockets",
-    interactive=True
-)
-```
-
-## 🛑 Flujo de Checkpoints
-
-1. **Tarea ejecutada** → MCP genera resultado
-2. **Checkpoint creado** → Snapshot guardado
-3. **Stakeholder revisa** → Ve resumen del resultado
-4. **Decisión**:
-   - ✅ **APPROVE**: Continúa al siguiente paso
-   - ❌ **REJECT**: Tarea rechazada
-   - 🔄 **REQUEST_CHANGES**: Re-ejecutar con feedback
-   - ⏪ **ROLLBACK**: Volver a checkpoint anterior
-
-## 📊 Estados de Tareas
-
-- `PENDING` ⏳ - Pendiente de inicio
-- `IN_PROGRESS` ▶️ - En ejecución
-- `WAITING_APPROVAL` 🛑 - Esperando decisión stakeholder
-- `APPROVED` ✅ - Aprobada por stakeholder
-- `REJECTED` ❌ - Rechazada
-- `COMPLETED` ✔️ - Completada y aprobada
-- `BLOCKED` 🚫 - Bloqueada por dependencias
-
-## 🧪 Testing
-
-```bash
-# Ejecutar test completo del nuevo flujo
-python tests\integration\test_workflow_with_checkpoints.py
-```
-
-## 📁 Estructura de Archivos Creados
-
-```
-HUB/
-├── config/toon/
-│   ├── backend_developer.toon          ✨ NUEVO
-│   └── frontend_developer.toon         ✨ NUEVO
-│
-├── core/
-│   ├── orchestrator_v2.py              ✨ NUEVO
-│   └── workflow/                       ✨ NUEVO MÓDULO
-│       ├── __init__.py
-│       ├── checklist_manager.py
-│       ├── checkpoint_handler.py
-│       └── markdown_reader.py
-│
-├── mcps/
-│   ├── backend_developer_mcp.py        ✨ NUEVO
-│   ├── frontend_developer_mcp.py       ✨ NUEVO
-│   ├── __init__.py                     📝 ACTUALIZADO
-│   └── contracts/
-│       ├── backend_developer_contracts.py   ✨ NUEVO
-│       ├── frontend_developer_contracts.py  ✨ NUEVO
-│       └── __init__.py                     📝 ACTUALIZADO
-│
-├── tests/integration/
-│   └── test_workflow_with_checkpoints.py   ✨ NUEVO
-│
-├── docs/
-│   └── FLUJO_CORRECTO.md               ✨ NUEVO
-│
-└── .agent/workflows/
-    └── NUEVO_FLUJO_CORRECTO.md         ✨ NUEVO
-```
-
-## ✅ Checklist de Implementación
-
-- [x] Crear archivos TOON especializados (backend, frontend)
-- [x] Crear contratos Pydantic para nuevos roles
-- [x] Implementar BackendDeveloperMCP
-- [x] Implementar FrontendDeveloperMCP
-- [x] Crear MarkdownReader
-- [x] Crear ChecklistManager
-- [x] Crear CheckpointHandler
-- [x] Implementar OrchestratorV2
-- [x] Actualizar exports en __init__.py
-- [x] Crear tests de integración
-- [x] Documentar flujo completo
-- [x] Actualizar README principal
-
-## 🎯 Próximos Pasos Sugeridos
-
-1. **UI Web Interactiva**
-   - Dashboard para aprobar checkpoints
-   - Visualización de progreso en tiempo real
-   - Interfaz para solicitar cambios
-
-2. **Integración con Herramientas**
-   - Jira / GitHub Issues
-   - Slack / Discord notifications
-   - Git integration para commits automáticos
-
-3. **Mejoras de LLM**
-   - Integrar OpenAI / Anthropic API real
-   - Usar TOON con LLM para generación inteligente
-   - Fine-tuning de prompts por rol
-
-4. **Analytics y Metrics**
-   - Tiempo promedio por tarea
-   - Tasa de aprobación/rechazo
-   - Velocidad del equipo virtual
-
-5. **Templates y Scaffolding**
-   - Templates de requerimientos .md
-   - Scaffolding de proyectos comunes
-   - Biblioteca de componentes reutilizables
-
-## 🔒 Compatibilidad
-
-✅ **Mantiene compatibilidad con**:
-- Sistema anterior (orchestrator v1)
-- MCPs legacy (developer, architect, tester)
-- Event Store y Memory Engine
-- TOON system completo
-- Rollback Manager
-- Circuit Breakers
-
-✅ **No rompe**:
-- Tests unitarios existentes
-- Configuraciones actuales
-- Contratos Pydantic previos
-
-## 📝 Notas Finales
-
-- Sistema 100% funcional y testeado
-- Listo para usar en producción
-- Documentación completa disponible
-- Conserva TODAS las funcionalidades previas
-- Agrega capacidades avanzadas de workflow
-- Emula flujo real de equipo de desarrollo
-- Validación constante del stakeholder
+**Fecha original**: 2025-12-02
+**Fecha de actualización**: 2026-06-03
+**Status**: EN TRANSICIÓN - V2 a eliminir, Superpowers como orquestador
 
 ---
 
-**Status**: ✅ COMPLETADO  
-**Version**: 2.0  
-**Implementado por**: MCP Team  
-**Fecha**: 2025-12-02
+## Resumen
+
+El sistema V2 implementó un flujo de desarrollo con roles especializados (architect, backend, frontend, tester), checkpoints, y orquestación custom. Todo eso fue **consolidado** en el MCP server unificado (43 tools) y ahora se **elimina** porque superpowers ya cubre el workflow completo.
+
+---
+
+## Estado Actual de los Archivos V2
+
+### mcps/ - MCPs Especializados (OBSOLETOS)
+
+| Archivo | Estado | Equivalente Superpowers |
+|---------|--------|------------------------|
+| `architect_mcp.py` | ❌ OBSTOLETO | `brainstorming` + `writing-plans` |
+| `backend_developer_mcp.py` | ❌ OBSTOLETO | `executing-plans` + `test-driven-development` |
+| `frontend_developer_mcp.py` | ❌ OBSTOLETO | `executing-plans` + `test-driven-development` |
+| `tester_mcp.py` | ❌ OBSTOLETO | `verification-before-completion` |
+| `developer_mcp.py` | ❌ OBSTOLETO | `executing-plans` |
+| `vision_specialist_mcp.py` | ❌ OBSTOLETO | MCP vision nativo |
+| `vision_specialist_mcp_optional.py` | ❌ OBSTOLETO | MCP vision nativo |
+| `base_mcp.py` | ❌ OBSTOLETO | No necesario |
+
+### mcps/contracts/ - Contratos Pydantic (OBSOLETOS)
+
+| Archivo | Estado | Equivalente |
+|---------|--------|-------------|
+| `architect_contracts.py` | ❌ OBSTOLETO | Skills definen I/O |
+| `backend_developer_contracts.py` | ❌ OBSTOLETO | Skills definen I/O |
+| `frontend_developer_contracts.py` | ❌ OBSTOLETO | Skills definen I/O |
+| `developer_contracts.py` | ❌ OBSTOLETO | Skills definen I/O |
+| `tester_contracts.py` | ❌ OBSTOLETO | Skills definen I/O |
+
+### config/toon/ - Archivos TOON por Rol (OBSOLETOS)
+
+| Archivo | Estado | Equivalente |
+|---------|--------|-------------|
+| `architect.toon` | ❌ OBSTOLETO | `brainstorming` skill |
+| `backend_developer.toon` | ❌ OBSTOLETO | `executing-plans` skill |
+| `frontend_developer.toon` | ❌ OBSTOLETO | `executing-plans` skill |
+| `developer.toon` | ❌ OBSTOLETO | `executing-plans` skill |
+| `tester.toon` | ❌ OBSTOLETO | `verification-before-completion` skill |
+| `orchestrator.toon` | ❌ OBSTOLETO | `subagent-driven-development` skill |
+| `global_rules.toon` | ❌ OBSTOLETO | Superpowers globales |
+
+### core/workflow/ - Sistema de Workflow (OBSOLETO)
+
+| Archivo | Estado | Equivalente Superpowers |
+|---------|--------|------------------------|
+| `checklist_manager.py` | ❌ OBSTOLETO | `todowrite` (tracking nativo) |
+| `checkpoint_handler.py` | ❌ OBSTOLETO | `verification-before-completion` |
+| `markdown_reader.py` | ❌ OBSTOLETO | `read` tool nativo |
+
+### core/memory/ - Sistema de Memoria V2 (OBSOLETO)
+
+| Archivo | Estado | Equivalente |
+|---------|--------|-------------|
+| `session_manager.py` | ❌ OBSTOLETO | `using-git-worktrees` + sesiones |
+| `skills_manager.py` | ❌ OBSTOLETO | skill system superpowers |
+| `event_store.py` | ❌ OBSTOLETO | mempalace drawers |
+| `memory_engine.py` | ❌ OBSTOLETO | mempalace backend |
+| `rollback_manager.py` | ❌ OBSTOLETO | git nativo |
+| `summarizing_session.py` | ❌ OBSTOLETO | compactación sesiones |
+| `trimming_session.py` | ❌ OBSTOLETO | compactación sesiones |
+
+### core/resolution/ - Resolución de Contexto (OBSOLETO)
+
+| Archivo | Estado | Equivalente |
+|---------|--------|-------------|
+| `contextual_resolver.py` | ❌ OBSTOLETO | `explore` agent |
+| `reference_detector.py` | ❌ OBSTOLETO | `explore` agent + grep |
+
+### core/indexing/ - Indexación (OBSOLETO)
+
+| Archivo | Estado | Equivalente |
+|---------|--------|-------------|
+| `code_indexer.py` | ❌ OBSTOLETO | mempalace knowledge graph |
+| `entity_tracker.py` | ❌ OBSTOLETO | mempalace kg_add/kg_query |
+
+### core/communication/ - Comunicación (OBSOLETO)
+
+| Archivo | Estado | Equivalente |
+|---------|--------|-------------|
+| `circuit_breaker.py` | ❌ OBSTOLETO | `systematic-debugging` |
+| `protocol.py` | ❌ OBSTOLETO | MCP protocol nativo |
+
+### Otros Archivos V2 (OBSOLETOS)
+
+| Archivo | Estado | Equivalente |
+|---------|--------|-------------|
+| `core/extended_knowledge.py` | ❌ OBSTOLETO | mempalace drawers |
+| `core/smart_session_orchestrator.py` | ❌ OBSTOLETO | `executing-plans` |
+| `core/advanced_features/orchestrator.py` | ❌ OBSTOLETO | `subagent-driven-development` |
+| `core/data/smart_sessions/` | ❌ OBSTOLETO | mempalace |
+| `data/smart_sessions/` | ❌ OBSTOLETO | mempalace |
+
+### Tests V2 (OBSOLETOS)
+
+| Archivo | Estado |
+|---------|--------|
+| `tests/integration/test_workflow_simple.py` | ❌ OBSTOLETO |
+| `tests/integration/test_workflow_with_checkpoints.py` | ❌ OBSTOLETO |
+| `tests/unit/test_circuit_breaker.py` | ❌ OBSTOLETO |
+| `tests/unit/test_event_store.py` | ❌ OBSTOLETO |
+| `tests/unit/test_memory_engine.py` | ❌ OBSTOLETO |
+| `tests/unit/test_protocol.py` | ❌ OBSTOLETO |
+
+---
+
+## Archivos que SE MANTIENEN (Infraestructura MCP)
+
+### core/ - MCP Server
+| Archivo | Función |
+|---------|---------|
+| `v6.py` | MCP server + tool definitions (simplificado) |
+| `mcp_http_server.py` | Transport HTTP/SSE (43 tools unificadas) |
+| `mcp_stdio.py` | Transport stdio para MCP configs |
+| `mempalace_backend.py` | Bridge a mempalace |
+| `storage/` | Lógica custom sobre mempalace |
+| `pretty_logger.py` | Logging |
+| `log_config.py` | Config de logging |
+| `nvidia_proxy.py` | Proxy NVIDIA NIM |
+
+### mcps/ - Solo si se mantiene algo
+| Archivo | Función |
+|---------|---------|
+| `__init__.py` | Imports (actualizar) |
+
+---
+
+## Nueva Arquitectura de Flujo
+
+```
+┌─────────────────────────────────────────────────┐
+│              SKILLS (workflow layer)             │
+│                                                 │
+│  brainstorming → writing-plans → subagent-dev   │
+│       ↓              ↓              ↓           │
+│  explore agent   mempalace    parallel agents   │
+│                                                 │
+│  verification-before-completion                 │
+│       ↓                                         │
+│  receiving-code-review → finishing-a-branch     │
+└──────────────────────┬──────────────────────────┘
+                       │ usa
+                       ▼
+┌─────────────────────────────────────────────────┐
+│              MCPs (tools layer)                  │
+│                                                 │
+│  mempalace: almacenamiento + knowledge graph    │
+│  mcp-hub: orquestación de tools                 │
+│  filesystem: archivos del proyecto              │
+│  github: repo, PRs, issues                      │
+└─────────────────────────────────────────────────┘
+```
+
+### Flujo de Desarrollo (NUEVO)
+
+```
+1. Usuario pide feature/bug
+2. brainstorming → diseña (reemplaza architect role)
+3. writing-plans → crea plan con micro-tareas TDD
+4. subagent-driven-development → dispatcha agentes por tarea
+   - Cada agente: TDD (test → fail → implement → pass → commit)
+5. agente principal → verification-before-completion
+6. finishing-a-development-branch → merge/PR
+```
+
+### Comparación: V2 vs Superpowers
+
+| Función V2 | Superpowers | Mejora |
+|------------|-------------|--------|
+| Architect role | `brainstorming` skill | Más disciplinado, hard-gates |
+| ChecklistManager | `todowrite` | Nativo, sin código custom |
+| CheckpointHandler | `verification-before-completion` | Integrado con workflow |
+| OrchestratorV2 | `subagent-driven-development` | Paralelismo real |
+| RollbackManager | git nativo | Más robusto |
+| SessionManager | `using-git-worktrees` | Aislamiento real |
+| SkillsManager | skill system | Más flexible |
+| CircuitBreaker | `systematic-debugging` | Root cause analysis |
+| CommunicationProtocol | MCP protocol nativo | Estándar |
+
+---
+
+## Plan de Eliminación
+
+**Ver:** `PLAN_eliminacion_v2.md` para detalles completos.
+
+### Resumen de Eliminación
+
+**Eliminar (18+ archivos):**
+- `mcps/` completo (8 MCPs especializados)
+- `mcps/contracts/` completo (5 contratos)
+- `config/toon/` completo (7 TOON files)
+- `core/workflow/` completo (3 archivos)
+- `core/memory/` completo (7 archivos)
+- `core/resolution/` completo (2 archivos)
+- `core/indexing/` completo (2 archivos)
+- `core/communication/` completo (2 archivos)
+- `core/extended_knowledge.py`
+- `core/smart_session_orchestrator.py`
+- `core/advanced_features/orchestrator.py`
+- `core/data/smart_sessions/`
+- `data/smart_sessions/`
+- Tests V2 (6 archivos)
+
+**Mantener:**
+- `core/v6.py` (simplificado)
+- `core/mcp_http_server.py`
+- `core/mcp_stdio.py`
+- `core/mempalace_backend.py`
+- `core/storage/`
+- `core/pretty_logger.py`
+- `core/log_config.py`
+- `core/nvidia_proxy.py`
+
+---
+
+## Workshops Activos
+
+| Workshop | Archivo | Status |
+|----------|---------|--------|
+| Eliminación V2 | `PLAN_eliminacion_v2.md` | EN PROGRESO |
+| claw-code NVIDIA | `WORKSHOP_clawcode_nvidia.md` | PLANNED |
+
+---
+
+## MCPs Actualmente en Uso
+
+**OpenCode** usa el MCP unificado:
+```
+memory-gateway → HUB/core/mcp_stdio.py (43 tools)
+mempalace → mempalace.mcp_server directo
+filesystem → @modelcontextprotocol/server-filesystem
+github → ghcr.io/github/github-mcp-server
+railway → railway mcp
+```
+
+**NO** se usan los MCPs especializados de V2 (están obsoletos).
+
+---
+
+**Status**: EN TRANSICIÓN
+**Última actualización**: 2026-06-03
+**Próximo paso**: Ejecutar eliminación V2

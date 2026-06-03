@@ -1,0 +1,3 @@
+{"created_at_ms":1780462998508,"model":"openai/gpt-oss-20b","session_id":"session-1780462998509-0","type":"session_meta","updated_at_ms":1780462999960,"version":1,"workspace_root":"C:\\Users\\Admin\\Desktop\\workspace\\HUB"}
+{"message":{"blocks":[{"text":"say hello in one word","type":"text"}],"role":"user"},"type":"message"}
+{"message":{"blocks":[{"thinking":"User wants: \"say hello in one word\". Just respond \"Hello\". Probably that's it.","type":"thinking"},{"text":"Hello","type":"text"}],"role":"assistant","usage":{"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"input_tokens":2954,"output_tokens":30}},"type":"message"}

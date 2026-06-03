@@ -208,15 +208,35 @@ class PrettyLogger:
         console_msg, file_msg = self._format_message(level, message, module, **kwargs)
         
         # Print a consola
-        if self.use_colors:
-            print(console_msg, file=sys.stderr)
-        else:
-            print(file_msg, file=sys.stderr)
+        try:
+            if self.use_colors:
+                print(console_msg, file=sys.stderr)
+            else:
+                print(file_msg, file=sys.stderr)
+        except UnicodeEncodeError:
+            try:
+                # Fallback encoding based on sys.stderr encoding or ascii
+                enc = sys.stderr.encoding or 'ascii'
+                if self.use_colors:
+                    safe_msg = console_msg.encode(enc, errors='replace').decode(enc)
+                else:
+                    safe_msg = file_msg.encode(enc, errors='replace').decode(enc)
+                print(safe_msg, file=sys.stderr)
+            except Exception:
+                # Last resort: absolute ascii
+                try:
+                    safe_msg = (console_msg if self.use_colors else file_msg).encode('ascii', errors='replace').decode('ascii')
+                    print(safe_msg, file=sys.stderr)
+                except Exception:
+                    pass
         
         # Escribir a archivo
         if self._file_handler:
-            self._file_handler.write(file_msg + "\n")
-            self._file_handler.flush()
+            try:
+                self._file_handler.write(file_msg + "\n")
+                self._file_handler.flush()
+            except Exception:
+                pass
         
         # Actualizar estadísticas
         level_key = level.name.lower()
@@ -286,6 +306,19 @@ class PrettyLogger:
     # Utilidades
     # ============================================
     
+    def _safe_print(self, text: str, file=sys.stderr):
+        try:
+            print(text, file=file)
+        except UnicodeEncodeError:
+            try:
+                enc = file.encoding or 'ascii'
+                print(text.encode(enc, errors='replace').decode(enc), file=file)
+            except Exception:
+                try:
+                    print(text.encode('ascii', errors='replace').decode('ascii'), file=file)
+                except Exception:
+                    pass
+
     def divider(self, title: str = "", char: str = "═", width: int = 60):
         """Imprimir línea divisoria"""
         if title:
@@ -295,7 +328,7 @@ class PrettyLogger:
         else:
             line = char * width
         
-        print(f"{Colors.DIM}{line}{Colors.RESET}", file=sys.stderr)
+        self._safe_print(f"{Colors.DIM}{line}{Colors.RESET}", file=sys.stderr)
     
     def header(self, title: str, subtitle: str = ""):
         """Imprimir encabezado bonito con branding ASCII"""
@@ -316,15 +349,15 @@ class PrettyLogger:
 {Colors.CYAN}        ╚████╔╝ ╚██████╔╝██║  ██║   ██║   ███████╗██╔╝ ██╗
 {Colors.CYAN}         ╚═══╝   ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
         """
-        print(ascii_art, file=sys.stderr)
+        self._safe_print(ascii_art, file=sys.stderr)
         
-        print(f"  {Colors.BOLD}{Colors.GREEN_NEON}✨ {title}{Colors.RESET}", file=sys.stderr)
+        self._safe_print(f"  {Colors.BOLD}{Colors.GREEN_NEON}✨ {title}{Colors.RESET}", file=sys.stderr)
         if subtitle:
-            print(f"  {Colors.DIM}{Colors.GREEN_MINT}🚀 {subtitle}{Colors.RESET}", file=sys.stderr)
+            self._safe_print(f"  {Colors.DIM}{Colors.GREEN_MINT}🚀 {subtitle}{Colors.RESET}", file=sys.stderr)
         
         self.divider(f" v9 Contextual Intelligence Core ", char="━", width=80)
-        print(f"  {Colors.DIM}System Status: {Colors.GREEN_PALE}ONLINE{Colors.RESET} | {Colors.DIM}Anti-Hallucination: {Colors.CYAN}JEPA WORLD MODEL{Colors.RESET}", file=sys.stderr)
-        print(f"  {Colors.DIM}Vortex Mode: {Colors.GREEN_PALE}ACTIVE{Colors.RESET} | {Colors.DIM}Shield Status: {Colors.GREEN_MINT}SYNCHRONIZED{Colors.RESET}", file=sys.stderr)
+        self._safe_print(f"  {Colors.DIM}System Status: {Colors.GREEN_PALE}ONLINE{Colors.RESET} | {Colors.DIM}Anti-Hallucination: {Colors.CYAN}JEPA WORLD MODEL{Colors.RESET}", file=sys.stderr)
+        self._safe_print(f"  {Colors.DIM}Vortex Mode: {Colors.GREEN_PALE}ACTIVE{Colors.RESET} | {Colors.DIM}Shield Status: {Colors.GREEN_MINT}SYNCHRONIZED{Colors.RESET}", file=sys.stderr)
         self.divider("", char="─", width=80)
 
     def v9_flow(self, step: str, details: str = ""):
@@ -339,7 +372,7 @@ class PrettyLogger:
         # Binary noise for the 'World Model' effect
         noise = "".join(random.choice("01") for _ in range(8))
         
-        print(f"{Colors.DIM}{timestamp}{Colors.RESET} {prefix} {Colors.GREEN_MID}{step}{Colors.RESET}: {message} {Colors.DIM}〈 {noise} 〉{Colors.RESET}", file=sys.stderr)
+        self._safe_print(f"{Colors.DIM}{timestamp}{Colors.RESET} {prefix} {Colors.GREEN_MID}{step}{Colors.RESET}: {message} {Colors.DIM}〈 {noise} 〉{Colors.RESET}", file=sys.stderr)
 
     def matrix_flow(self, tool_name: str, action: str, color: str = Colors.GREEN_NEON):
         """Matrix-like visual flow for tools with binary/ASCII patterns"""
@@ -356,14 +389,14 @@ class PrettyLogger:
             rain_lines.append((p, s))
         
         # Línea de acción principal centrada entre lluvia
-        print(f"{Colors.DIM}{timestamp}{Colors.RESET} {color}{rain_lines[0][0]}                     {rain_lines[0][1]}{Colors.RESET}", file=sys.stderr)
+        self._safe_print(f"{Colors.DIM}{timestamp}{Colors.RESET} {color}{rain_lines[0][0]}                     {rain_lines[0][1]}{Colors.RESET}", file=sys.stderr)
         
         matrix_msg = f"{Colors.DIM}{timestamp}{Colors.RESET} {color}{Colors.BOLD}【 {rain_lines[1][0]} 】{Colors.RESET} "
         matrix_msg += f"{color}{action.upper()}{Colors.RESET}: {Colors.BOLD}{tool_name}{Colors.RESET} "
         matrix_msg += f"{color}{Colors.BOLD}【 {rain_lines[1][1]} 】{Colors.RESET}"
-        print(matrix_msg, file=sys.stderr)
+        self._safe_print(matrix_msg, file=sys.stderr)
         
-        print(f"{Colors.DIM}{timestamp}{Colors.RESET} {color}{rain_lines[2][0]}                     {rain_lines[2][1]}{Colors.RESET}", file=sys.stderr)
+        self._safe_print(f"{Colors.DIM}{timestamp}{Colors.RESET} {color}{rain_lines[2][0]}                     {rain_lines[2][1]}{Colors.RESET}", file=sys.stderr)
         
         # Escribir a archivo si existe
         if self._file_handler:
@@ -372,10 +405,10 @@ class PrettyLogger:
     
     def json(self, data: Union[Dict, list], title: str = "Data"):
         """Imprimir JSON formateado"""
-        print(f"{Colors.DIM}─── {title} ───{Colors.RESET}", file=sys.stderr)
+        self._safe_print(f"{Colors.DIM}─── {title} ───{Colors.RESET}", file=sys.stderr)
         formatted = json.dumps(data, indent=2, ensure_ascii=False, default=str)
         for line in formatted.split('\n'):
-            print(f"{Colors.CYAN}{line}{Colors.RESET}", file=sys.stderr)
+            self._safe_print(f"{Colors.CYAN}{line}{Colors.RESET}", file=sys.stderr)
     
     def stats(self) -> Dict[str, int]:
         """Obtener estadísticas de logs"""

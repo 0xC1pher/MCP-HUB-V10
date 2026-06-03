@@ -12,6 +12,8 @@ class SessionStorage:
 
     def __init__(self, storage_dir: str = "data/sessions",
                  retention_days: int = 30, wing: str = "hub"):
+        from pathlib import Path
+        self.storage_dir = Path(storage_dir)
         self.wing = wing
         self.retention_days = retention_days
         self._backend = None

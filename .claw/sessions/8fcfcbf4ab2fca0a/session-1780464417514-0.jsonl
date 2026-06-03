@@ -1,0 +1,2 @@
+{"created_at_ms":1780464417513,"model":"openai/deepseek-v4-flash","session_id":"session-1780464417514-0","type":"session_meta","updated_at_ms":1780464417513,"version":1,"workspace_root":"C:\\Users\\Admin\\Desktop\\workspace\\HUB"}
+{"message":{"blocks":[{"text":"say hello in one word","type":"text"}],"role":"user"},"type":"message"}

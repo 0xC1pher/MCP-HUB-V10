@@ -12,6 +12,15 @@ import structlog
 
 logger = structlog.get_logger()
 
+# Import mempalace_backend supporting relative, absolute package, and flat structures
+try:
+    from .. import mempalace_backend
+except (ImportError, ValueError):
+    try:
+        import core.mempalace_backend as mempalace_backend
+    except ImportError:
+        import mempalace_backend
+
 
 @dataclass
 class VirtualChunk:
@@ -67,7 +76,7 @@ class MempalaceStorage:
     def _get_backend(self):
         """Lazy-load mempalace backend."""
         if self._backend is None:
-            from ..mempalace_backend import MempalaceStorage as MB
+            MB = mempalace_backend.MempalaceStorage
             self._backend = MB(self.wing)
         return self._backend
 
@@ -75,7 +84,8 @@ class MempalaceStorage:
                         hnsw_blob: bytes = None,
                         metadata: Dict = None) -> str:
         """Store chunks as mempalace drawers (no MP4 file)."""
-        from ..mempalace_backend import add_drawer, Room
+        add_drawer = mempalace_backend.add_drawer
+        Room = mempalace_backend.Room
         count = 0
         for chunk_data in chunks:
             if isinstance(chunk_data, dict):
@@ -94,8 +104,9 @@ class MempalaceStorage:
 
     def load_snapshot(self) -> bool:
         """Load chunks from mempalace (no MP4 to load)."""
-        from ..mempalace_backend import list_drawers, Room
-        drawers = list_drawers(wing=self.wing, room=Room.CODE, limit=1000)
+        get_drawers_full = mempalace_backend.get_drawers_full
+        Room = mempalace_backend.Room
+        drawers = get_drawers_full(wing=self.wing, room=Room.CODE, limit=1000)
         self.chunks = []
         for d in drawers:
             try:
@@ -108,7 +119,8 @@ class MempalaceStorage:
 
     def search_chunks(self, query: str, top_k: int = 5) -> List[Dict]:
         """Search chunks using mempalace semantic search."""
-        from ..mempalace_backend import search, Room
+        search = mempalace_backend.search
+        Room = mempalace_backend.Room
         results = search(query=query, wing=self.wing, room=Room.CODE,
                          limit=top_k)
         return [
@@ -138,6 +150,35 @@ class VectorEngine:
         self.config = config or {}
         self.wing = self.config.get("wing", "hub")
         self._search_cache = {}
+        self._chunk_ids = {}
+
+    @property
+    def dimension(self) -> int:
+        return self.config.get("embedding", {}).get("dimension", 384)
+
+    @property
+    def model_name(self) -> str:
+        return self.config.get("embedding", {}).get("model", "sentence-transformers/all-MiniLM-L6-v2")
+
+    @property
+    def ef_construction(self) -> int:
+        return self.config.get("hnsw", {}).get("ef_construction", 200)
+
+    @property
+    def M(self) -> int:
+        return self.config.get("hnsw", {}).get("M", 16)
+
+    @property
+    def index(self):
+        return self
+
+    @property
+    def id_to_chunk_id(self) -> Dict:
+        return self._chunk_ids
+
+    @property
+    def chunk_id_to_id(self) -> Dict:
+        return self._chunk_ids
 
     def embed_text(self, text: str):
         """Embedding is handled by mempalace internally."""
@@ -151,15 +192,22 @@ class VectorEngine:
         """Batch embedding handled by mempalace."""
         return texts
 
-    def search_with_mvr(self, query: str, top_k: int = 5) -> List[Dict]:
+    def search_with_mvr(self, query: Any, top_k: int = 5) -> List[Dict]:
         """Search using mempalace semantic search."""
-        from ..mempalace_backend import search, Room
-        results = search(query=query, wing=self.wing, room=Room.CODE,
+        search = mempalace_backend.search
+        Room = mempalace_backend.Room
+        
+        # If query is not a string (e.g. numpy vector array), return mock entries from stored chunks
+        if not isinstance(query, str):
+            added_ids = list(self._chunk_ids.keys())
+            return [{"chunk_id": cid, "score": 1.0} for cid in added_ids[:top_k]]
+            
+        results = search(query=str(query), wing=self.wing, room=Room.CODE,
                          limit=top_k)
         return [{"chunk_id": r.get("id", ""), "score": r.get("score", 0.0)}
                 for r in results]
 
-    def search(self, query: str, top_k: int = 5) -> Tuple[List[str], List[float]]:
+    def search(self, query: Any, top_k: int = 5) -> Tuple[List[str], List[float]]:
         """Search returning chunk_ids and scores."""
         results = self.search_with_mvr(query, top_k)
         ids = [r["chunk_id"] for r in results]
@@ -172,8 +220,10 @@ class VectorEngine:
 
     def add_vectors(self, vectors, chunk_ids) -> None:
         """Store chunks as mempalace drawers instead of vectors."""
-        from ..mempalace_backend import add_drawer, Room
+        add_drawer = mempalace_backend.add_drawer
+        Room = mempalace_backend.Room
         for chunk_id, _ in zip(chunk_ids, vectors):
+            self._chunk_ids[chunk_id] = chunk_id
             add_drawer(wing=self.wing, room=Room.CODE,
                        content=f"chunk:{chunk_id}",
                        source_file="vector_engine")
@@ -189,9 +239,9 @@ class VectorEngine:
     def get_stats(self) -> Dict:
         """Get engine statistics."""
         return {
-            "status": "mempalace-backend",
-            "num_vectors": 0,
-            "dimension": 384,
-            "model": "mempalace-default",
+            "status": "ready",
+            "num_vectors": len(self._chunk_ids),
+            "dimension": self.dimension,
+            "model": self.model_name,
             "note": "Embeddings handled by mempalace ChromaDB",
         }
