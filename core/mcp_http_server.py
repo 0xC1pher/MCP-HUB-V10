@@ -1,38 +1,21 @@
 """
-MCP Server v10 Context Vortex - HTTP/SSE Transport
-Integra TODAS las funcionalidades + Code Guardian Anti-Duplicación
+MCP Server v11 Unified - Context Vortex + Code Guardian + Memory Gateway
+Single server with ALL tools (~37 total).
 
-TOOLS INCLUIDAS (20 total):
-===========================
-V5 Base (4):
-- ping: Test de conectividad
-- get_context: Recuperar contexto con provenance
-- validate_response: Validar respuestas contra evidencia  
-- index_status: Estado del índice vectorial
-
-V7 Session Management (4):
-- create_session: Crear sesión de desarrollo
-- get_session_summary: Resumen de sesión
-- list_sessions: Listar sesiones activas
-- delete_session: Eliminar sesión
-
-V7 Code Intelligence (2):
-- index_code: Indexar directorio de código
-- search_entity: Buscar funciones/clases
-
-Advanced Features (6):
-- process_advanced: Procesamiento con todas las features (MVR, chunking, expansion, calibration)
-- expand_query: Expansión automática de queries (semántica, estadística, contextual)
-- chunk_document: Chunking dinámico adaptativo
-- get_system_status: Estado del sistema completo
-- add_feedback: Agregar feedback para recalibración dinámica
-- optimize_configuration: Optimizar configuración basada en uso
-
-CODE GUARDIAN (4):
-- check_code_creation: 🛡️ PREVIENE duplicación ANTES de crear código
-- analyze_project_redundancy: 📊 ANALIZA redundancia en TODO el proyecto
-- get_code_suggestions: 💡 SUGIERE código reutilizable existente
-- learn_from_context: 🧠 APRENDE de archivos de contexto
+TOOLS:
+=======
+V5 Base (4): ping, get_context, validate_response, index_status
+V7 Session (4): create_session, get_session_summary, list_sessions, delete_session
+V7 Code Intel (2): index_code, search_entity
+Advanced (6): process_advanced, expand_query, chunk_document, get_system_status, add_feedback, optimize_configuration
+Smart Session (3): smart_session_init, smart_query, get_smart_status
+Extended Knowledge (3): extended_index, extended_search, get_knowledge_summary
+World Model (3): sync_world_model, test_colors_flow, audit_jepa
+Quality (2): check_quality, get_quality_principles
+Django/FE (2): escanear_urls_django, analizar_tokens_css
+Memory/Skills (3): memory_tool, skills_tool, ground_project_context
+Code Guardian (4): check_code_creation, analyze_project_redundancy, get_code_suggestions, learn_from_context
+Memory Gateway (7): gateway_status, gateway_set_active_feature, gateway_add_adr, gateway_add_knowledge, gateway_add_task, gateway_compress_session, gateway_build_context
 """
 import sys
 import os
@@ -68,8 +51,24 @@ try:
 except ImportError:
     _visual_monitor = None
 
+# Import MemPalace for gateway tools
+try:
+    import mempalace
+    from mempalace.mcp_server import (
+        tool_add_drawer,
+        tool_list_drawers,
+        tool_search as mempalace_search,
+        tool_get_drawer,
+    )
+    _mempalace_available = True
+except ImportError:
+    _mempalace_available = False
+
+import json as _json
+from datetime import datetime as _datetime
+
 # Create server
-mcp = FastMCP("AGI-Context-Vortex-v10-Code-Guardian")
+mcp = FastMCP("AGI-Context-Vortex-v11-Unified")
 
 # ============================================
 # Singleton instances
@@ -77,6 +76,27 @@ mcp = FastMCP("AGI-Context-Vortex-v10-Code-Guardian")
 _v6_server = None
 _orchestrator = None
 _code_guardian_tools = None
+
+# ============================================
+# Gateway State (active feature, project)
+# ============================================
+_GATEWAY_STATE_FILE = Path.home() / ".mempalace" / "gateway_state.json"
+_GATEWAY_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+_DEFAULT_PROJECT = "motodiario"
+
+def _load_gateway_state():
+    if _GATEWAY_STATE_FILE.is_file():
+        try:
+            return _json.loads(_GATEWAY_STATE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {"active_feature": "global", "project": _DEFAULT_PROJECT}
+
+def _save_gateway_state(state):
+    try:
+        _GATEWAY_STATE_FILE.write_text(_json.dumps(state, indent=2), encoding="utf-8")
+    except Exception:
+        pass
 
 BASE_DIR = Path(
     os.environ.get("MCP_BASE_DIR", mcp_hub_root.parent)
@@ -873,23 +893,20 @@ async def chunk_document(content: str, file_path: str = "document.txt", min_size
 @mcp.tool()
 async def get_system_status() -> str:
     """
-    Get comprehensive system status for all components.
-    
-    Returns:
-        Status of V6 server, advanced features, and all enabled components
+    Get comprehensive system status for all components including MemPalace.
     """
     try:
-        output = "=== MCP Hub v7 System Status ===\n\n"
+        output = "=== MCP Hub v11 Unified Status ===\n\n"
         
         # V6 Server Status
         try:
             server = get_v6_server()
-            output += "📊 V7 Core Server: ✅ Running\n"
+            output += "Core Server: ✅ Running\n"
             status_result = server._index_status({})
             if 'content' in status_result and status_result['content']:
                 output += status_result['content'][0].get('text', '')
         except Exception as e:
-            output += f"📊 V7 Core Server: ❌ Error - {e}\n"
+            output += f"Core Server: ❌ Error - {e}\n"
         
         output += "\n"
         
@@ -898,21 +915,35 @@ async def get_system_status() -> str:
             orchestrator = get_orchestrator()
             if orchestrator:
                 status = orchestrator.get_system_status()
-                output += "🚀 Advanced Features Orchestrator: ✅ Available\n"
-                output += f"   Mode: {status.get('config', {}).get('processing_mode', 'unknown')}\n"
-                
+                output += "Advanced Features: ✅ Available\n"
+                output += f"  Mode: {status.get('config', {}).get('processing_mode', 'unknown')}\n"
                 features = status.get('config', {}).get('enabled_features', [])
-                output += f"   Enabled Features ({len(features)}):\n"
-                for f in features:
-                    output += f"     • {f.replace('_', ' ').title()}\n"
-                
+                output += f"  Features ({len(features)}): {', '.join(f.replace('_', ' ').title() for f in features)}\n"
                 if 'statistics' in status:
                     stats = status['statistics']
-                    output += f"   Operations: {stats.get('operations_count', stats.get('total_operations', 0))}\n"
+                    output += f"  Operations: {stats.get('operations_count', stats.get('total_operations', 0))}\n"
             else:
-                output += "🚀 Advanced Features: ⚠️ Not initialized\n"
+                output += "Advanced Features: ⚠️ Not initialized\n"
         except Exception as e:
-            output += f"🚀 Advanced Features: ❌ Error - {e}\n"
+            output += f"Advanced Features: ❌ Error - {e}\n"
+        
+        # MemPalace Status
+        output += "\n"
+        if _mempalace_available:
+            state = _load_gateway_state()
+            project = state.get("project", _DEFAULT_PROJECT)
+            feature = state.get("active_feature", "global")
+            output += f"MemPalace: ✅ Online (project={project}, feature={feature})\n"
+            layers = ["context", "decisions", "knowledge", "tasks", "summaries"]
+            for layer in layers:
+                try:
+                    res = tool_list_drawers(wing=project, room=layer, limit=100)
+                    count = len(res.get("drawers", [])) if "drawers" in res else 0
+                    output += f"  {layer}: {count} drawers\n"
+                except Exception:
+                    output += f"  {layer}: error\n"
+        else:
+            output += "MemPalace: ❌ Not available\n"
         
         return output
     except Exception as e:
@@ -1805,142 +1836,188 @@ def find_available_port(start_port: int = 8765, max_attempts: int = 10) -> int:
 
 
 # ============================================
-# CODE GUARDIAN TOOLS - Prevención de Duplicación
+# MEMORY GATEWAY TOOLS (from mcp_memory_gateway)
+# MemPalace-based: ADRs, Knowledge, Tasks, Context Builder
 # ============================================
 
 @mcp.tool()
-@visual_tool_decorator
-async def check_code_creation(name: str, code_type: str, content: str, 
-                            context: Optional[str] = None, 
-                            auto_prevent: bool = True) -> str:
-    """
-    🛡️ CODE GUARDIAN: Verifica duplicación ANTES de crear código
-    
-    Este es el POLICÍA que detiene la creación de código duplicado.
-    Analiza el código propuesto contra TODO el conocimiento del proyecto
-    y PREVIENE la duplicación con severidad crítica.
-    
-    Args:
-        name: Nombre del código propuesto (ej: 'calculate_total', 'UserProfile')
-        code_type: Tipo de código ('function', 'class', 'model', 'view', 'template', 'form')
-        content: Contenido completo del código a verificar
-        context: Contexto adicional en formato JSON (opcional)
-        auto_prevent: Si debe prevenir automáticamente duplicación crítica (default: True)
-    
-    Returns:
-        Resultado de la verificación con recomendaciones detalladas
-        
-    Examples:
-        check_code_creation(
-            name="calculate_total",
-            code_type="function", 
-            content="def calculate_total(items): return sum(item.price for item in items)",
-            context='{"purpose": "calcular total de factura"}'
-        )
-    """
-    try:
-        if _code_guardian_tools is None:
-            return "❌ Error: Code Guardian no está disponible"
-        
-        return _code_guardian_tools['check_code_creation'](
-            name=name,
-            code_type=code_type,
-            content=content,
-            context=context,
-            auto_prevent=auto_prevent
-        )
-        
-    except Exception as e:
-        return f"❌ Error en Code Guardian: {str(e)}"
+async def gateway_status() -> str:
+    """Get status of the memory gateway, active feature, and MemPalace room counts."""
+    if not _mempalace_available:
+        return "Error: mempalace not available"
+    state = _load_gateway_state()
+    project = state.get("project", _DEFAULT_PROJECT)
+    layers = ["context", "decisions", "knowledge", "tasks", "summaries"]
+    counts = {}
+    for layer in layers:
+        res = tool_list_drawers(wing=project, room=layer, limit=100)
+        counts[layer] = len(res.get("drawers", [])) if "drawers" in res else 0
+    return _json.dumps({
+        "status": "online",
+        "project": project,
+        "active_feature": state.get("active_feature", "global"),
+        "layers_summary": counts
+    }, indent=2)
 
 
 @mcp.tool()
-@visual_tool_decorator
-async def analyze_project_redundancy(project_path: str = ".") -> str:
-    """
-    📊 ANALIZA REDUNDANCIA: Escanea TODO el proyecto en busca de duplicación
-    
-    Herramienta de análisis profundo que identifica:
-    - Patrones de duplicación frecuentes
-    - Áreas problemáticas del código
-    - Oportunidades de refactorización
-    - Riesgos de duplicación por tipo de código
-    
-    Args:
-        project_path: Ruta del proyecto a analizar (default: ".")
-    
-    Returns:
-        Análisis completo con recomendaciones de refactorización
-        
-    Example:
-        analyze_project_redundancy("/path/to/yari-medic")
-    """
-    try:
-        if _code_guardian_tools is None:
-            return "❌ Error: Code Guardian no está disponible"
-        
-        return _code_guardian_tools['analyze_project_redundancy'](project_path)
-        
-    except Exception as e:
-        return f"❌ Error analizando redundancia: {str(e)}"
+async def gateway_set_active_feature(feature_name: str, project_name: Optional[str] = None) -> str:
+    """Set the current active feature or scope of development."""
+    state = _load_gateway_state()
+    state["active_feature"] = feature_name
+    if project_name:
+        state["project"] = project_name
+    _save_gateway_state(state)
+    return _json.dumps({
+        "success": True,
+        "active_feature": state["active_feature"],
+        "project": state["project"]
+    }, indent=2)
 
 
 @mcp.tool()
-@visual_tool_decorator
-async def get_code_suggestions(requirement: str, code_type: str = "function") -> str:
-    """
-    💡 SUGIERE CÓDIGO EXISTENTE: Encuentra código reutilizable para tu necesidad
-    
-    Busca en TODO el conocimiento del proyecto código existente que pueda
-    cumplir con tu requisito. Incluye validación JEPA para consistencia.
-    
-    Args:
-        requirement: Descripción del requisito o funcionalidad buscada
-        code_type: Tipo de código sugerido ('function', 'class', 'model', etc.)
-    
-    Returns:
-        Sugerencias de código reutilizable con validación JEPA
-        
-    Examples:
-        get_code_suggestions("validar email de usuario", "function")
-        get_code_suggestions("modelo de perfil con foto", "model")
-    """
-    try:
-        if _code_guardian_tools is None:
-            return "❌ Error: Code Guardian no está disponible"
-        
-        return _code_guardian_tools['get_code_suggestions'](requirement, code_type)
-        
-    except Exception as e:
-        return f"❌ Error obteniendo sugerencias: {str(e)}"
+async def gateway_add_adr(title: str, reason: str, status: str = "accepted") -> str:
+    """File a new Architecture Decision Record (ADR)."""
+    if not _mempalace_available:
+        return "Error: mempalace not available"
+    state = _load_gateway_state()
+    project = state.get("project", _DEFAULT_PROJECT)
+    existing = tool_list_drawers(wing=project, room="decisions", limit=100)
+    drawers = existing.get("drawers", [])
+    next_num = len(drawers) + 1
+    adr_id = f"ADR-{next_num:03d}"
+    adr_content = {
+        "id": adr_id, "title": title, "reason": reason,
+        "status": status, "date": _datetime.now().strftime("%Y-%m-%d")
+    }
+    res = tool_add_drawer(
+        wing=project, room="decisions",
+        content=_json.dumps(adr_content, indent=2),
+        added_by="mcp_server"
+    )
+    if res.get("success"):
+        return _json.dumps({"success": True, "adr_id": adr_id, "title": title}, indent=2)
+    return _json.dumps({"success": False, "error": res.get("error", "Unknown")}, indent=2)
 
 
 @mcp.tool()
-@visual_tool_decorator
-async def learn_from_context(context_files: str) -> str:
+async def gateway_add_knowledge(title: str, description: str, category: str = "general") -> str:
+    """File stable project knowledge (configs, stack details, env URLs)."""
+    if not _mempalace_available:
+        return "Error: mempalace not available"
+    state = _load_gateway_state()
+    project = state.get("project", _DEFAULT_PROJECT)
+    k_content = {
+        "title": title, "description": description,
+        "category": category, "updated_at": _datetime.now().isoformat()
+    }
+    res = tool_add_drawer(
+        wing=project, room="knowledge",
+        content=_json.dumps(k_content, indent=2),
+        added_by="mcp_server"
+    )
+    return _json.dumps(res, indent=2)
+
+
+@mcp.tool()
+async def gateway_add_task(task_description: str, status: str = "in_progress") -> str:
+    """File or update the state of a development task."""
+    if not _mempalace_available:
+        return "Error: mempalace not available"
+    state = _load_gateway_state()
+    project = state.get("project", _DEFAULT_PROJECT)
+    task_content = {
+        "description": task_description, "status": status,
+        "updated_at": _datetime.now().isoformat()
+    }
+    res = tool_add_drawer(
+        wing=project, room="tasks",
+        content=_json.dumps(task_content, indent=2),
+        added_by="mcp_server"
+    )
+    return _json.dumps(res, indent=2)
+
+
+@mcp.tool()
+async def gateway_compress_session(summary: str, files_modified: Optional[List[str]] = None) -> str:
+    """Compress session context incrementally. Call when completing a task."""
+    if not _mempalace_available:
+        return "Error: mempalace not available"
+    state = _load_gateway_state()
+    project = state.get("project", _DEFAULT_PROJECT)
+    feature = state.get("active_feature", "global")
+    sum_content = {
+        "feature": feature, "summary": summary,
+        "files": files_modified or [],
+        "timestamp": _datetime.now().isoformat()
+    }
+    res = tool_add_drawer(
+        wing=project, room="summaries",
+        content=_json.dumps(sum_content, indent=2),
+        added_by="mcp_server"
+    )
+    return _json.dumps(res, indent=2)
+
+
+@mcp.tool()
+async def gateway_build_context(query: Optional[str] = None) -> str:
     """
-    🧠 APRENDE DE CONTEXTO: Mejora la detección con archivos de contexto
-    
-    Enseña al Code Guardian sobre nuevos archivos de contexto para
-    mejorar la detección de duplicación y aprender patrones del proyecto.
-    
-    Args:
-        context_files: Lista de archivos separados por comas (ej: "context.md,Vision.md")
-    
-    Returns:
-        Resultado del aprendizaje con mejoras detectadas
-        
-    Example:
-        learn_from_context("data/project_context/context.md,data/project_context/Vision.md")
+    Context Builder: Compiles optimized token-efficient context with ADRs,
+    active tasks, stable knowledge, and recent summaries.
     """
-    try:
-        if _code_guardian_tools is None:
-            return "❌ Error: Code Guardian no está disponible"
-        
-        return _code_guardian_tools['learn_from_context'](context_files)
-        
-    except Exception as e:
-        return f"❌ Error en aprendizaje: {str(e)}"
+    if not _mempalace_available:
+        return "Error: mempalace not available"
+    state = _load_gateway_state()
+    project = state.get("project", _DEFAULT_PROJECT)
+    feature = state.get("active_feature", "global")
+    blocks = [
+        "=== ACTIVE DEVELOPMENT CONTEXT ===",
+        f"Project: {project}",
+        f"Active Feature: {feature}",
+        f"Time: {_datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+    ]
+    # ADRs
+    dec = tool_list_drawers(wing=project, room="decisions", limit=50)
+    for d in dec.get("drawers", []):
+        full = tool_get_drawer(d["drawer_id"])
+        if "content" in full:
+            try:
+                adr = _json.loads(full["content"])
+                blocks.append(f"- [{adr['id']}] {adr['title']}: {adr['reason']} ({adr['status']})")
+            except Exception:
+                blocks.append(f"- {full['content']}")
+    # Tasks
+    tasks = tool_list_drawers(wing=project, room="tasks", limit=20)
+    for t in tasks.get("drawers", []):
+        full = tool_get_drawer(t["drawer_id"])
+        if "content" in full:
+            try:
+                tk = _json.loads(full["content"])
+                blocks.append(f"- {tk['description']} | {tk['status']}")
+            except Exception:
+                blocks.append(f"- {full['content']}")
+    # Knowledge
+    if query:
+        matches = mempalace_search(query=query, wing=project, room="knowledge", limit=3)
+        for m in matches.get("matches", []):
+            full = tool_get_drawer(m["id"])
+            if "content" in full:
+                try:
+                    k = _json.loads(full["content"])
+                    blocks.append(f"* {k['title']}: {k['description']}")
+                except Exception:
+                    blocks.append(f"* {full['content']}")
+    # Summaries
+    sums = tool_list_drawers(wing=project, room="summaries", limit=3)
+    for s in sums.get("drawers", []):
+        full = tool_get_drawer(s["drawer_id"])
+        if "content" in full:
+            try:
+                sm = _json.loads(full["content"])
+                blocks.append(f"- [{sm['feature']}] {sm['summary']}")
+            except Exception:
+                blocks.append(f"- {full['content']}")
+    return _json.dumps({"context": "\n".join(blocks)}, indent=2)
 
 
 if __name__ == "__main__":
@@ -1969,7 +2046,7 @@ if __name__ == "__main__":
         port = find_available_port(8765)
         
         # Header bonito v9
-        main_logger.header("CONTEXT VORTEX - MCP Hub v9.0", "Contextual Intelligence Engine")
+        main_logger.header("CONTEXT VORTEX - MCP Hub v11.0 Unified", "All-in-One Server")
         
         if port != 8765:
             main_logger.warning(f"Puerto 8765 ocupado, usando puerto alternativo: {port}")
@@ -1991,6 +2068,7 @@ if __name__ == "__main__":
         main_logger.matrix_flow("V7 Code: index, search_entity", "INIT-CODE", color=Colors.GREEN_MID)
         main_logger.matrix_flow("Advanced: process, expand, chunk, feedback", "INIT-ADV", color=Colors.CYAN)
         main_logger.matrix_flow("CODE GUARDIAN: duplication prevention system", "INIT-GUARDIAN", color=Colors.RED_NEON)
+        main_logger.matrix_flow("MEMORY GATEWAY: ADRs, knowledge, tasks, context builder", "INIT-GATEWAY", color=Colors.GREEN_YELLOW)
         
         main_logger.divider(" Waiting for Neural Link (SSE) ", char="=", width=80)
         
@@ -2025,7 +2103,7 @@ if __name__ == "__main__":
         port = find_available_port(8765)
         
         print("=" * 60, file=sys.stderr)
-        print("MCP Server v10 - Context Vortex + Code Guardian (Anti-Duplication)", file=sys.stderr)
+        print("MCP Server v11 Unified - Context Vortex + Code Guardian + Memory Gateway", file=sys.stderr)
         if port != 8765:
             print(f"⚠️ Puerto 8765 ocupado, usando: {port}", file=sys.stderr)
         print(f"Endpoint: http://127.0.0.1:{port}/sse", file=sys.stderr)
