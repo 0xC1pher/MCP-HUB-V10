@@ -10,7 +10,7 @@ from datetime import datetime
 
 from core.communication.protocol import MCPCommunicationProtocol, MCPRequest, MCPResponse
 from core.memory.session_manager import SessionManager
-from mcp_hub_v6 import MCPHubV6
+from core.mcp_http_server import get_v6_server as MCPHubV6
 
 logger = structlog.get_logger()
 
