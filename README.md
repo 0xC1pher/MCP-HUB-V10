@@ -10,36 +10,7 @@ El HUB V12 consolida todas las características en un único servidor MCP agnós
 
 ### 📊 Diagrama de Arquitectura
 
-```mermaid
-graph TD
-    %% Clientes
-    C1[OpenCode CLI] -->|JSON-RPC stdio| HUB
-    C2[Claude Code] -->|JSON-RPC stdio| HUB
-    C3[Gemini CLI] -->|JSON-RPC stdio| HUB
-
-    %% HUB Central
-    subgraph "MCP HUB Unified Server (mcp_stdio.py)"
-        HUB{FastMCP Router}
-        
-        HUB --> CG[Code Guardian]
-        HUB --> MG[Memory Gateway]
-        HUB --> CV[Context Vortex]
-        HUB --> VS[Vision Specialist]
-    end
-
-    %% Backend Storage
-    MG --> MP[(MemPalace Backend)]
-    CV --> MP
-    CG --> MP
-    
-    subgraph "MemPalace Storage (Unified Engine)"
-        MP --> ContextRoom[/Room: context/]
-        MP --> DecisionsRoom[/Room: decisions/]
-        MP --> KnowledgeRoom[/Room: knowledge/]
-        MP --> TasksRoom[/Room: tasks/]
-        MP --> SummariesRoom[/Room: summaries/]
-    end
-```
+![Diagrama Arquitectura V12](diagrama.png)
 
 ---
 
