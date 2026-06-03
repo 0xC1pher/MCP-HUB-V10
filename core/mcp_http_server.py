@@ -153,35 +153,7 @@ def get_v6_server():
     global _v6_server
     if _v6_server is None:
         try:
-            # Importar de forma segura para evitar problemas circulares
-            # Precargar módulos de storage para evitar importación circular
-            try:
-                from storage import vector_engine
-                print("Storage modules pre-loaded successfully", file=sys.stderr)
-            except ImportError as e:
-                print(f"Warning: Storage modules loading issue: {e}", file=sys.stderr)
-            
-            # Usar importlib para importar dinámicamente y evitar problemas de inicialización
-            import importlib.util
-            import sys
-            
-            # Verificar si el módulo ya está en sys.modules
-            if 'v6' in sys.modules:
-                v6_module = sys.modules['v6']
-            else:
-                # Cargar el módulo dinámicamente
-                spec = importlib.util.spec_from_file_location(
-                    "v6", 
-                    os.path.join(os.path.dirname(__file__), "v6.py")
-                )
-                if spec and spec.loader:
-                    v6_module = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(v6_module)
-                    sys.modules['v6'] = v6_module
-                else:
-                    raise ImportError("No se pudo cargar el módulo v6")
-            
-            MCPServerV6 = getattr(v6_module, 'MCPServerV6')
+            from core.v6 import MCPServerV6
             _v6_server = MCPServerV6()
         except Exception as e:
             print(f"Warning: Could not import MCPServerV6: {e}", file=sys.stderr)
@@ -1258,8 +1230,8 @@ def get_smart_orchestrator():
     global _smart_orchestrator
     if _smart_orchestrator is None:
         try:
-            from smart_session_orchestrator import SmartSessionOrchestrator
-            _smart_orchestrator = SmartSessionOrchestrator(mcp_server=get_v6_server())
+            from core.smart_session_orchestrator import SmartSessionOrchestrator
+            _smart_orchestrator = SmartSessionOrchestrator(wing="hub", server=get_v6_server())
         except Exception as e:
             print(f"Warning: Could not create smart orchestrator: {e}", file=sys.stderr)
             _smart_orchestrator = None
@@ -1453,8 +1425,8 @@ def get_extended_knowledge():
     global _extended_knowledge
     if _extended_knowledge is None:
         try:
-            from extended_knowledge import ExtendedKnowledgeIndexer
-            _extended_knowledge = ExtendedKnowledgeIndexer()
+            from core.extended_knowledge import ExtendedKnowledgeIndexer
+            _extended_knowledge = ExtendedKnowledgeIndexer(wing="hub")
             _extended_knowledge.load_index()  # Cargar índice existente
         except Exception as e:
             print(f"Warning: Could not create extended knowledge: {e}", file=sys.stderr)
