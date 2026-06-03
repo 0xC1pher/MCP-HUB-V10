@@ -8,6 +8,12 @@ import os
 import logging
 from pathlib import Path
 
+# Setup paths statically for analyzers
+current_dir = Path(__file__).resolve().parent
+mcp_hub_root = current_dir.parent
+if str(mcp_hub_root) not in sys.path: sys.path.insert(0, str(mcp_hub_root))
+if str(current_dir) not in sys.path: sys.path.insert(0, str(current_dir))
+
 # Setup logging
 log_dir = Path(__file__).parent.parent / "logs"
 log_dir.mkdir(exist_ok=True)
