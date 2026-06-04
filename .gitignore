@@ -64,3 +64,4 @@ WORKSHOP_clawcode_nvidia.md
 feat.md
 data/vision_cache.db
 data/vision_cache.json
+test_stdio.py
