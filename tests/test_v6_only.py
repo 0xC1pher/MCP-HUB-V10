@@ -7,8 +7,8 @@ import json
 import sys
 from pathlib import Path
 
-def test_v6():
-    """Test v6 only"""
+def run_v6_test():
+    """Helper that runs v6 only test"""
     
     print("="*80)
     print("Testing MCP Server V6 ONLY")
@@ -119,6 +119,10 @@ def test_v6():
         process.terminate()
         return False
 
+def test_v6():
+    """Test v6 for pytest"""
+    assert run_v6_test()
+
 if __name__ == "__main__":
     print("\n")
     print("╔" + "="*78 + "╗")
@@ -126,7 +130,7 @@ if __name__ == "__main__":
     print("╚" + "="*78 + "╝")
     print()
     
-    v6_ok = test_v6()
+    v6_ok = run_v6_test()
     
     print("\n" + "="*80)
     print(f"v6: {'✓ PASS' if v6_ok else '✗ FAIL'}")

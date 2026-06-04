@@ -56,3 +56,11 @@ Thumbs.db
 # Backup files
 *.backup
 *.bak
+
+# Planning & cache files
+IMPLEMENTACION_FLUJO_CORRECTO.md
+PLAN_eliminacion_v2.md
+WORKSHOP_clawcode_nvidia.md
+feat.md
+data/vision_cache.db
+data/vision_cache.json

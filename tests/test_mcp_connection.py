@@ -7,8 +7,8 @@ import json
 import sys
 from pathlib import Path
 
-def test_mcp_server(version='v6'):
-    """Test que el servidor MCP responde correctamente"""
+def run_mcp_server_test(version='v6'):
+    """Helper que verifica que el servidor MCP responde correctamente"""
     
     print(f"="*80)
     print(f"Testing MCP Server {version.upper()}")
@@ -119,6 +119,10 @@ def test_mcp_server(version='v6'):
         process.terminate()
         return False
 
+def test_mcp_server():
+    """Test de conexión MCP para pytest"""
+    assert run_mcp_server_test('v6')
+
 if __name__ == "__main__":
     print("\n")
     print("╔" + "="*78 + "╗")
@@ -133,7 +137,7 @@ if __name__ == "__main__":
     print("\n")
     
     # Test v6
-    v6_ok = test_mcp_server('v6')
+    v6_ok = run_mcp_server_test('v6')
     
     print("\n" + "="*80)
     print("RESUMEN")

@@ -155,13 +155,16 @@ def main():
         create_required_directories(mcp_hub_root)
         
         # Import and run appropriate server
+        import importlib
         if version == 'v5':
             logger.info("Importando servidor MCP v5...")
-            from mcp_server_v5 import main as server_main
+            mcp_server_v5 = importlib.import_module("mcp_server_v5")
+            server_main = mcp_server_v5.main
             logger.info("Iniciando servidor MCP v5...")
         else:  # v6
             logger.info("Importando servidor MCP v6 (nuevo v6.py)...")
-            from v6 import main as server_main
+            v6 = importlib.import_module("v6")
+            server_main = v6.main
             logger.info("Iniciando servidor MCP v6...")
         
         server_main()

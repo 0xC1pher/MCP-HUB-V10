@@ -46,43 +46,70 @@ class AnalyzeResponse(BaseModel):
     from_cache: bool
     fallback_used: bool
 
+import threading
+
 class VisionCache:
-    def __init__(self, max_size: int = 1000, disk_path: str = "vision_cache.db"):
+    def __init__(self, max_size: int = 1000, disk_path: str = "vision_cache.json"):
         self.memory_cache = {}
-        self.disk_cache = shelve.open(disk_path, writeback=True)
+        # Force json file suffix
+        db_path = Path(disk_path)
+        if db_path.suffix != ".json":
+            db_path = db_path.with_suffix(".json")
+        self.disk_path = db_path
+        self.disk_path.parent.mkdir(parents=True, exist_ok=True)
+        self.lock = threading.Lock()
         self.max_size = max_size
         self.memory_hits = self.disk_hits = self.total_hits = 0
         self.misses = 0
+        self._load_disk_cache()
+
+    def _load_disk_cache(self):
+        self.disk_cache = {}
+        if self.disk_path.exists():
+            try:
+                with open(self.disk_path, 'r', encoding='utf-8') as f:
+                    self.disk_cache = json.load(f)
+            except Exception as e:
+                logger.warning(f"Error loading disk cache: {e}")
+
+    def _save_disk_cache(self):
+        try:
+            with open(self.disk_path, 'w', encoding='utf-8') as f:
+                json.dump(self.disk_cache, f, ensure_ascii=False)
+        except Exception as e:
+            logger.warning(f"Error saving disk cache: {e}")
 
     def get_key(self, image_b64: str, prompt: str) -> str:
         hash_input = f"{image_b64[:1000]}|{prompt}"
         return hashlib.md5(hash_input.encode()).hexdigest()
 
     def get(self, key: str) -> Optional[str]:
-        # L1 Memory
-        if key in self.memory_cache:
-            self.memory_hits += 1
-            self.total_hits += 1
-            return self.memory_cache[key]
-        
-        # L2 Disk
-        if key in self.disk_cache:
-            caption = self.disk_cache[key]
-            self.memory_cache[key] = caption  # Promote to memory
-            self.disk_hits += 1
-            self.total_hits += 1
-            return caption
-        
-        self.misses += 1
-        return None
+        with self.lock:
+            # L1 Memory
+            if key in self.memory_cache:
+                self.memory_hits += 1
+                self.total_hits += 1
+                return self.memory_cache[key]
+            
+            # L2 Disk
+            if key in self.disk_cache:
+                caption = self.disk_cache[key]
+                self.memory_cache[key] = caption  # Promote to memory
+                self.disk_hits += 1
+                self.total_hits += 1
+                return caption
+            
+            self.misses += 1
+            return None
 
     def set(self, key: str, caption: str):
-        self.memory_cache[key] = caption
-        if len(self.memory_cache) >= self.max_size:
-            oldest_key = next(iter(self.memory_cache))
-            del self.memory_cache[oldest_key]
-        self.disk_cache[key] = caption
-        self.disk_cache.sync()
+        with self.lock:
+            self.memory_cache[key] = caption
+            if len(self.memory_cache) >= self.max_size:
+                oldest_key = next(iter(self.memory_cache))
+                del self.memory_cache[oldest_key]
+            self.disk_cache[key] = caption
+            self._save_disk_cache()
 
 class VisionMetrics:
     def __init__(self):
@@ -92,7 +119,7 @@ class VisionMetrics:
         self.request_count = 0
         self.response_times = []
 
-    def record_vision_analysis(self, from_cache: bool, fallback: bool, duration: float):
+    def record_vision_analysis(self, from_cache: bool, fallback: bool, duration: float = 0.0):
         self.vision_analyses += 1
         self.request_count += 1
         self.response_times.append(duration)
@@ -123,6 +150,7 @@ class VisionHub:
         
         self.app = FastAPI(title="Vision Hub API")
         self.static_dir = Path(static_dir)
+        self.static_dir.mkdir(parents=True, exist_ok=True)
         
         # LLM Provider - lazy load
         if llm_provider is None:
@@ -229,6 +257,7 @@ class VisionHub:
             return self.metrics.get_metrics()
 
     async def _process_vision(self, image_b64: str, prompt: str) -> str:
+        from playwright.async_api import async_playwright
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
             context = await browser.new_context(
