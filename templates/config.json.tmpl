@@ -1,0 +1,28 @@
+{
+  "$schema": "{{SCHEMA}}",
+  "plugin": [
+    {
+      "path": "{{PLUGIN_PATH}}",
+      "options": {
+        "cacheDir": ".opencode/cache/ua-graph",
+        "toolPrefix": "ua_",
+        "enableEmbeddings": false,
+        "autoScan": true,
+        "enableAutoContext": false,
+        "maxContextTokens": 500
+      }
+    }
+  ],
+  "mcp": {
+    "filesystem": {
+      "type": "local",
+      "command": "{{PYTHON_EXE}}",
+      "args": ["-m", "server", "{{USERPROFILE}}/Desktop"]
+    },
+    "yari-mcp-v8": {
+      "type": "local",
+      "command": "{{MCP_HUB_V8_VENV_PYTHON}}",
+      "args": ["{{MCP_HUB_V8_SERVER_PY}}"]
+    }
+  }
+}
