@@ -1,0 +1,20 @@
+# Logs
+*.log
+bootstrap/setup.log
+
+# Env / secrets
+bootstrap/.env
+
+# Build artifacts
+opencode-ua-plugin/dist/
+opencode-ua-plugin/node_modules/
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/venv/
+**/.venv/
+
+# OS
+.DS_Store
+Thumbs.db
