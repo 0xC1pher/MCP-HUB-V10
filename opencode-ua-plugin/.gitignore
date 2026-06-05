@@ -1,0 +1,3 @@
+node_modules/
+*.log
+# dist/ intentionally NOT ignored -- pre-built dist is committed for portability

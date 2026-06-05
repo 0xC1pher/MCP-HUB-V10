@@ -1,0 +1,77 @@
+import { GraphCache } from "../cache/graph.js";
+
+export interface ArchitecturalContext {
+  project: string;
+  description: string;
+  languages: string[];
+  frameworks: string[];
+  commit: string | null;
+  layers: Array<{ name: string; description: string; nodeCount: number; sampleNodes: string[] }>;
+  rendered: string;
+}
+
+export interface ContextOptions {
+  maxTokens?: number;
+  maxNodesPerLayer?: number;
+}
+
+export async function buildArchitecturalContext(
+  directory: string,
+  options: ContextOptions = {}
+): Promise<ArchitecturalContext | null> {
+  const maxNodesPerLayer = options.maxNodesPerLayer ?? 10;
+  const cache = new GraphCache(directory);
+  const graph = await cache.loadGraph();
+  if (!graph) return null;
+
+  const p = graph.project;
+  const layers = (graph.layers ?? []).map((l: { name: string; description: string; nodeIds: string[] }) => {
+    const sampleNodes: string[] = [];
+    for (const id of l.nodeIds) {
+      if (sampleNodes.length >= maxNodesPerLayer) break;
+      const n: { name?: string; summary?: string } | undefined = graph.nodes.find((x: { id: string }) => x.id === id);
+      const label = n?.name ?? id;
+      const summary = n?.summary ? ` - ${n.summary}` : "";
+      sampleNodes.push(`${label}${summary}`);
+    }
+    return {
+      name: l.name,
+      description: l.description,
+      nodeCount: l.nodeIds.length,
+      sampleNodes
+    };
+  });
+
+  const maxChars = (options.maxTokens ?? 1500) * 4;
+  const parts: string[] = [];
+  parts.push(`# ${p.name} - ${p.description || "(no description)"}`);
+  parts.push(`Languages: ${p.languages.join(", ") || "(unknown)"}`);
+  parts.push(`Frameworks: ${p.frameworks.join(", ") || "(unknown)"}`);
+  if (p.gitCommitHash) parts.push(`Last analyzed: ${p.gitCommitHash}`);
+
+  for (const l of layers) {
+    const header = `\n## ${l.name[0].toUpperCase()}${l.name.slice(1)} (${l.nodeCount} nodes) - ${l.description}`;
+    parts.push(header);
+    const sample = l.sampleNodes.slice(0, maxNodesPerLayer);
+    const extra = l.nodeCount - sample.length;
+    if (sample.length > 0) {
+      parts.push(sample.map(n => `- ${n}`).join("\n"));
+      if (extra > 0) parts.push(`- ...(${extra} more)`);
+    }
+  }
+
+  let rendered = parts.join("\n");
+  if (rendered.length > maxChars) {
+    rendered = rendered.slice(0, maxChars) + "\n... (truncated)";
+  }
+
+  return {
+    project: p.name,
+    description: p.description ?? "",
+    languages: p.languages ?? [],
+    frameworks: p.frameworks ?? [],
+    commit: p.gitCommitHash ?? null,
+    layers,
+    rendered
+  };
+}

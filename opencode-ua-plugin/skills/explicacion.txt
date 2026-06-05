@@ -1,0 +1,18 @@
+
+---
+
+### 🛠️ Cómo integrarlas en tu entorno (gemini-cli / opencode / antigravity)
+
+1. **Crea el directorio de skills**: En la raíz de tu proyecto o en tu directorio global de configuración de la IA, crea una carpeta llamada `.skills/` o `skills/`.
+2. **Guarda los archivos**: Copia el contenido de arriba en dos archivos:
+   - `.skills/backend-testing-architect.md`
+   - `.skills/resilient-api-architect.md`
+3. **Configuración (si aplica)**: 
+   - En **Gemini CLI**, asegúrate de que la configuración apunte a este directorio (muchas versiones leen automáticamente `.skills/` o permiten definirlo en `.gemini/config.yaml`).
+   - En **OpenCode** o agentes similares, estos archivos Markdown con frontmatter YAML son detectados automáticamente como "Custom Instructions" o "Skills" contextuales.
+4. **Invocación**: Simplemente menciona palabras clave como *"aplica la estrategia de testing enterprise"* o *"diseña este endpoint con resiliencia"*, y el CLI cargará automáticamente las reglas estrictas de estos archivos.
+
+### 💡 Por qué esto es "Nivel Senior Enterprise":
+- **Opinión Fuerte**: No deja la decisión al azar. Prohíbe prácticas anti-patrón (como mocks de BD en memoria para integración).
+- **Enfoque en el Ciclo de Vida**: No solo escribe código, exige observabilidad, idempotencia y manejo de errores desde el día 1.
+- **Formato Parseable**: El uso de YAML Frontmatter permite que cualquier herramienta de IA moderna indexe, busque y active estas habilidades de forma eficiente sin consumir tokens innecesarios en cada prompt.

@@ -1,0 +1,22 @@
+{
+  "name": "opencode-ua-plugin",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": { ".": "./dist/index.js" },
+  "scripts": {
+    "build": "tsc && node scripts/copy-bin.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@understand-anything/core": "file:../Understand-Anything/understand-anything-plugin/packages/core"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "1.4.10",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.1.0",
+    "zod": "^4.1.0"
+  }
+}

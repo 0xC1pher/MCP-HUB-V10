@@ -6,7 +6,7 @@ bootstrap/setup.log
 bootstrap/.env
 
 # Build artifacts
-opencode-ua-plugin/dist/
+# opencode-ua-plugin/dist/ -- INTENTIONALLY tracked: pre-built for portability
 opencode-ua-plugin/node_modules/
 
 # Python
