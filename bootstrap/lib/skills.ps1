@@ -29,11 +29,16 @@ function Install-Skills {
     if (-not (Test-Path -LiteralPath $DestinationDir)) {
         New-Item -ItemType Directory -Path $DestinationDir -Force | Out-Null
     }
-    $files = Get-ChildItem -LiteralPath $SourceDir -File
+    $files = Get-ChildItem -LiteralPath $SourceDir -Recurse -File
     $copied = 0
     $skipped = 0
     foreach ($f in $files) {
-        $destFile = Join-Path $DestinationDir $f.Name
+        $relative = $f.FullName.Substring($SourceDir.Length).TrimStart('\', '/')
+        $destFile = Join-Path $DestinationDir $relative
+        $destDir = Split-Path -Parent $destFile
+        if (-not (Test-Path -LiteralPath $destDir)) {
+            New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+        }
         $srcHash = Get-FileHash -Path $f.FullName
         $dstHash = Get-FileHash -Path $destFile
         if ($srcHash -eq $dstHash) {
