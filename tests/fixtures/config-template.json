@@ -1,0 +1,11 @@
+{
+  "$schema": "{{SCHEMA}}",
+  "plugin": [
+    {
+      "path": "{{PLUGIN_PATH}}",
+      "options": {
+        "cacheDir": ".opencode/cache/ua-graph"
+      }
+    }
+  ]
+}
