@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@understand-anything/core": "file:../Understand-Anything/understand-anything-plugin/packages/core"
+    "@understand-anything/core": "file:../vendor/understand-anything-core"
   },
   "devDependencies": {
     "@opencode-ai/plugin": "1.4.10",
