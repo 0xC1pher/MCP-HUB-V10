@@ -15,13 +15,15 @@ If any are missing, prints a clear error and exits 1.
 
 ## Step 1: Build the plugin
 
-Runs `bun install && bun run build` in `opencode-ua-plugin/`. The build:
+First builds the vendored `@understand-anything/core` (in `vendor/understand-anything-core`) with `bun install && bun run build`. The core's `package.json` points to `dist/index.js`, so without this step the plugin's `tsc` can't find the core's types.
+
+Then runs `bun install && bun run build` in `opencode-ua-plugin/`. The build:
 - Resolves `@understand-anything/core` from the local `vendor/` directory (via `file:../vendor/understand-anything-core`)
 - Compiles TypeScript with `tsc`
 - Copies `bin/*.mjs` scripts to `dist/` (cross-platform)
 - Outputs `dist/index.js` (the plugin entry)
 
-The `Test-PluginBuilt` check skips rebuild if `dist/index.js` is newer than all source files.
+The `Test-PluginBuilt` check skips rebuild if `dist/index.js` is newer than all source files. The freshness check uses `StartsWith` on normalized paths so it works on Windows.
 
 ## Step 2: Set up MCPs
 
@@ -43,7 +45,7 @@ Reads `templates/config.json.tmpl`, substitutes placeholders with detected paths
 Placeholders:
 - `{{USERPROFILE}}` — `$env:USERPROFILE` (normalized to forward slashes)
 - `{{SCHEMA}}` — `https://opencode.ai/config.json`
-- `{{PLUGIN_PATH}}` — `$env:USERPROFILE/Desktop/tools/opencode-ua-plugin/dist/index.js` (after normalization)
+- `{{PLUGIN_PATH}}` — the actual path of the plugin's `dist/index.js` in this repo, passed from `setup.ps1` (after backslash normalization)
 - `{{PYTHON_EXE}}` — default `C:/Program Files/Python311/python.exe` (overridable via `.env`)
 - `{{MCP_HUB_V8_VENV_PYTHON}}` and `{{MCP_HUB_V8_SERVER_PY}}` — required, must be in `.env` (otherwise setup fails loud with "unsubstituted placeholder" error)
 

@@ -8,6 +8,10 @@ bootstrap/.env
 # Build artifacts
 # opencode-ua-plugin/dist/ -- INTENTIONALLY tracked: pre-built for portability
 opencode-ua-plugin/node_modules/
+# vendor/understand-anything-core/dist/ is rebuilt by Build-PluginCore on first run
+vendor/understand-anything-core/dist/
+vendor/understand-anything-core/node_modules/
+vendor/understand-anything-core/bun.lock
 
 # Python
 **/__pycache__/

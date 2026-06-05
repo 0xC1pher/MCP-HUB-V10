@@ -23,6 +23,18 @@ $nestedSrc = Join-Path $PSScriptRoot "fixtures/skills-nested"
 $nestedDst = Join-Path $env:TEMP "ua-test-skills-nested-$(Get-Random)"
 Install-Skills -SourceDir $nestedSrc -DestinationDir $nestedDst
 Assert-FileExists (Join-Path $nestedDst "skill-category/SKILL.md") "nested SKILL.md should be copied with dir structure preserved"
+
+# Test: Install-Skills skips unchanged files (regression: Get-FileHash collision)
+# Use a distinct name to avoid colliding with common.ps1's $Script:LogPath
+# (PS 5.1 variables are case-insensitive).
+$installLogPath = Join-Path $env:TEMP "ua-test-skills-log-$(Get-Random).log"
+. "$PSScriptRoot/../bootstrap/lib/common.ps1"
+Initialize-Logging -LogPath $installLogPath
+Install-Skills -SourceDir $nestedSrc -DestinationDir $nestedDst
+$installLog = Get-Content $installLogPath -Raw
+Assert-Contains $installLog "0 copied" "Second run should copy 0 files (SHA check should skip all unchanged)"
+Assert-Contains $installLog "skipped" "Second run should report skipped files"
+Remove-Item $installLogPath -Force
 Remove-Item $nestedDst -Recurse -Force
 
 # Test: Install-Skills against the real dev-bootstrap skills snapshot

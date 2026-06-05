@@ -1,10 +1,13 @@
 . "$PSScriptRoot/common.ps1"
 
 function Get-ConfigSubstitutions {
+    param(
+        [string]$PluginPath = (Join-Path $env:USERPROFILE "Desktop\tools\opencode-ua-plugin\dist\index.js")
+    )
     $substs = @{
         USERPROFILE = $env:USERPROFILE
         SCHEMA = "https://opencode.ai/config.json"
-        PLUGIN_PATH = Join-Path $env:USERPROFILE "Desktop\tools\opencode-ua-plugin\dist\index.js"
+        PLUGIN_PATH = $PluginPath
         PYTHON_EXE = "C:\Program Files\Python311\python.exe"
     }
     $envFile = Join-Path $PSScriptRoot "..\\.env"
@@ -45,7 +48,10 @@ function Render-Config {
     if ($content.Contains("{{")) {
         throw "Unsubstituted placeholders remain in rendered config: $content"
     }
-    Set-Content -LiteralPath $OutputPath -Value $content -Encoding UTF8
+    # Use -NoNewline: Set-Content on PS 5.1 adds a trailing newline by default,
+    # which would make the file differ from the rendered content and break the
+    # idempotency check.
+    Set-Content -LiteralPath $OutputPath -Value $content -Encoding UTF8 -NoNewline
     Write-Log -Level "INFO" -Message "Config rendered successfully"
 }
 
@@ -56,5 +62,8 @@ function Test-ConfigMatches {
     )
     if (-not (Test-Path -LiteralPath $OutputPath)) { return $false }
     $actual = Get-Content -LiteralPath $OutputPath -Raw
-    return ($actual -eq $ExpectedContent)
+    # Normalize trailing whitespace: PS 5.1 Set-Content/Get-Content can introduce
+    # or strip trailing newlines depending on how the file was written, so a
+    # strict byte comparison is brittle. Trim both sides for the check.
+    return (($actual.TrimEnd("`r", "`n", " ")) -eq ($ExpectedContent.TrimEnd("`r", "`n", " ")))
 }

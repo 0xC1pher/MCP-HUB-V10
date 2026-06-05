@@ -44,19 +44,23 @@ foreach ($p in $prereqs) {
 }
 
 # Step 1: Build plugin
+$pluginCoreDir = Join-Path $repoRoot "vendor/understand-anything-core"
+Build-PluginCore -CoreDir $pluginCoreDir
+
 $pluginDir = Join-Path $repoRoot "opencode-ua-plugin"
 $pluginBuildCmd = "bun install && bun run build"
 Build-Plugin -PluginDir $pluginDir -BuildCommand $pluginBuildCmd
 
 # Step 2: Setup MCPs
+$substs = Get-ConfigSubstitutions -PluginPath (Join-Path $pluginDir "dist/index.js")
 $mcps = @{
     filesystem = @{
         venvPath = $null
         requirementsPath = $null
     }
     "yari-mcp-v8" = @{
-        venvPath = "{{MCP_HUB_V8_VENV_PATH}}"
-        requirementsPath = "{{MCP_HUB_V8_REQUIREMENTS}}"
+        venvPath = $substs["MCP_HUB_V8_VENV_PATH"]
+        requirementsPath = $substs["MCP_HUB_V8_REQUIREMENTS"]
     }
 }
 foreach ($name in $mcps.Keys) {
@@ -70,7 +74,6 @@ Install-Skills -SourceDir $skillsSource -DestinationDir $skillsDest
 
 # Step 4: Render config
 $tmpl = Join-Path $repoRoot "templates/config.json.tmpl"
-$substs = Get-ConfigSubstitutions
 $configOut = Join-Path $env:USERPROFILE ".opencode/config.json"
 
 # Compute the rendered content for idempotency check

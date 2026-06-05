@@ -12,7 +12,9 @@ function Get-SkillsDestination {
     return $skillsPath
 }
 
-function Get-FileHash {
+function Get-SHA256OfFile {
+    # Wrapper that returns just the hex string. Renamed from Get-FileHash
+    # to avoid shadowing the built-in Get-FileHash cmdlet (PS 5.1 collision).
     param([string]$Path)
     if (Test-Path -LiteralPath $Path) {
         return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
@@ -39,8 +41,8 @@ function Install-Skills {
         if (-not (Test-Path -LiteralPath $destDir)) {
             New-Item -ItemType Directory -Path $destDir -Force | Out-Null
         }
-        $srcHash = Get-FileHash -Path $f.FullName
-        $dstHash = Get-FileHash -Path $destFile
+        $srcHash = Get-SHA256OfFile -Path $f.FullName
+        $dstHash = Get-SHA256OfFile -Path $destFile
         if ($srcHash -eq $dstHash) {
             $skipped++
             continue

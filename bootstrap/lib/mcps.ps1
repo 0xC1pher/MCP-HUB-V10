@@ -58,8 +58,12 @@ function Setup-MCP {
     )
     Write-Log -Level "INFO" -Message "Setting up MCP: $Name"
     try {
-        if ($Config.ContainsKey("venvPath") -and $Config.ContainsKey("requirementsPath")) {
-            Ensure-PythonVenv -VenvPath $Config.venvPath -RequirementsPath $Config.requirementsPath
+        $venvPath = $null
+        $reqPath = $null
+        if ($Config.ContainsKey("venvPath")) { $venvPath = $Config.venvPath }
+        if ($Config.ContainsKey("requirementsPath")) { $reqPath = $Config.requirementsPath }
+        if ($venvPath -and $reqPath) {
+            Ensure-PythonVenv -VenvPath $venvPath -RequirementsPath $reqPath
         }
         Write-Log -Level "INFO" -Message "MCP $Name setup complete"
     } catch {
