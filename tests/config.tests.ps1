@@ -24,4 +24,25 @@ Assert-False (Test-ConfigMatches -OutputPath $out -ExpectedContent $different) "
 # Cleanup
 Remove-Item $out -Force
 
+# Test: Get-ConfigSubstitutions normalizes backslashes to forward slashes
+$realSubsts = Get-ConfigSubstitutions
+Assert-True ($null -ne $realSubsts) "Get-ConfigSubstitutions should return a hashtable"
+Assert-False ($realSubsts["USERPROFILE"].Contains("\")) "USERPROFILE should be normalized to forward slashes"
+Assert-False ($realSubsts["PLUGIN_PATH"].Contains("\")) "PLUGIN_PATH should be normalized to forward slashes"
+Assert-False ($realSubsts["PYTHON_EXE"].Contains("\")) "PYTHON_EXE should be normalized to forward slashes"
+
+# Test: Get-ConfigSubstitutions output produces valid JSON when applied to template
+$prodTmpl = Join-Path $PSScriptRoot "..\templates\config.json.tmpl"
+$renderedOut = Join-Path $env:TEMP "ua-test-rendered-$(Get-Random).json"
+$realSubsts["MCP_HUB_V8_VENV_PYTHON"] = "C:/test/venv/Scripts/python.exe"
+$realSubsts["MCP_HUB_V8_SERVER_PY"] = "C:/test/server.py"
+Render-Config -TemplatePath $prodTmpl -Substitutions $realSubsts -OutputPath $renderedOut
+$renderedContent = Get-Content $renderedOut -Raw
+try {
+    $null = ConvertFrom-Json $renderedContent
+} catch {
+    throw "Rendered config from prod template with real substitutions is not valid JSON: $_"
+}
+Remove-Item $renderedOut -Force
+
 Write-Host "config.tests.ps1: OK"

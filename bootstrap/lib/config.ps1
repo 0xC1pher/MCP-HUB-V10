@@ -21,6 +21,12 @@ function Get-ConfigSubstitutions {
     if (-not $substs.ContainsKey("MCP_HUB_V8_SERVER_PY")) {
         $substs["MCP_HUB_V8_SERVER_PY"] = "{{MCP_HUB_V8_SERVER_PY}}"
     }
+    foreach ($key in @($substs.Keys)) {
+        $value = [string]$substs[$key]
+        if ($value -match "\\") {
+            $substs[$key] = $value.Replace("\", "/")
+        }
+    }
     return $substs
 }
 
