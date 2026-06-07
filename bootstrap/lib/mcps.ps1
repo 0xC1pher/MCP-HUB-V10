@@ -8,17 +8,27 @@ function Resolve-PythonInterpreter {
         "py"
     )
     foreach ($c in $candidates) {
+        # Log every candidate we try so operators can see *which* paths were
+        # searched. The previous code only emitted a single "not found" WARN
+        # at the end, which left troubleshooting blind.
+        $label = if ($c -eq "py") { "py launcher (-3.11)" } else { $c }
+        Write-Log -Level "INFO" -Message "Trying Python candidate: $label"
         try {
             if ($c -eq "py") {
                 $out = & py -3.11 -c "import sys; print(sys.executable)" 2>$null
             } else {
-                if (-not (Test-Path $c)) { continue }
+                if (-not (Test-Path $c)) {
+                    Write-Log -Level "INFO" -Message "Skipping $c (not found)"
+                    continue
+                }
                 $out = & $c -c "import sys; print(sys.executable)" 2>$null
             }
             if ($LASTEXITCODE -eq 0 -and $out) {
+                Write-Log -Level "INFO" -Message "Resolved Python: $($out.Trim())"
                 return $out.Trim()
             }
         } catch {
+            Write-Log -Level "INFO" -Message "Candidate $c threw: $_"
             continue
         }
     }
@@ -66,7 +76,17 @@ function Setup-MCP {
             Ensure-PythonVenv -VenvPath $venvPath -RequirementsPath $reqPath
         }
         Write-Log -Level "INFO" -Message "MCP $Name setup complete"
+        return @{
+            Name = $Name
+            Ok = $true
+            Error = $null
+        }
     } catch {
         Write-Log -Level "ERROR" -Message "MCP $Name setup failed: $_"
+        return @{
+            Name = $Name
+            Ok = $false
+            Error = "$_"
+        }
     }
 }

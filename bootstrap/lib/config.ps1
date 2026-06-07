@@ -2,7 +2,11 @@
 
 function Get-ConfigSubstitutions {
     param(
-        [string]$PluginPath = (Join-Path $env:USERPROFILE "Desktop\tools\opencode-ua-plugin\dist\index.js")
+        [string]$PluginPath = (Join-Path $env:USERPROFILE "Desktop\tools\opencode-ua-plugin\dist\index.js"),
+        # Optional explicit path to the .env file. When omitted, falls back to
+        # <repoRoot>/bootstrap/.env (the historical default). Tests pass an
+        # isolated file to exercise this function without touching the real .env.
+        [string]$EnvFile = (Join-Path (Split-Path -Parent $PSScriptRoot) ".env")
     )
     $substs = @{
         USERPROFILE = $env:USERPROFILE
@@ -10,19 +14,32 @@ function Get-ConfigSubstitutions {
         PLUGIN_PATH = $PluginPath
         PYTHON_EXE = "C:\Program Files\Python311\python.exe"
     }
-    $envFile = Join-Path $PSScriptRoot "..\\.env"
-    if (Test-Path -LiteralPath $envFile) {
-        Get-Content $envFile | ForEach-Object {
-            if ($_ -match "^(\w+)=(.*)$") {
-                $substs[$Matches[1]] = $Matches[2]
+    if (Test-Path -LiteralPath $EnvFile) {
+        Get-Content -LiteralPath $EnvFile | ForEach-Object {
+            # Skip blanks and comments so users can document their .env.
+            $line = $_
+            if ([string]::IsNullOrWhiteSpace($line)) { return }
+            if ($line -match "^\s*#") { return }
+            if ($line -match "^(\w+)=(.*)$") {
+                $key = $Matches[1]
+                $value = $Matches[2]
+                # Reject empty / whitespace-only values: the previous code stored
+                # them as-is, which silently bypassed the fail-loud "unsubstituted
+                # placeholder" check and produced a broken config. Keep the
+                # placeholder so Render-Config throws a clear error.
+                if ([string]::IsNullOrWhiteSpace($value)) {
+                    Write-Log -Level "WARN" -Message "Ignoring empty value for '$key' in $EnvFile"
+                    return
+                }
+                $substs[$key] = $value
             }
         }
     }
-    if (-not $substs.ContainsKey("MCP_HUB_V8_VENV_PYTHON")) {
-        $substs["MCP_HUB_V8_VENV_PYTHON"] = "{{MCP_HUB_V8_VENV_PYTHON}}"
+    if (-not $substs.ContainsKey("MCP_HUB_V12_REPO_PATH")) {
+        $substs["MCP_HUB_V12_REPO_PATH"] = "{{MCP_HUB_V12_REPO_PATH}}"
     }
-    if (-not $substs.ContainsKey("MCP_HUB_V8_SERVER_PY")) {
-        $substs["MCP_HUB_V8_SERVER_PY"] = "{{MCP_HUB_V8_SERVER_PY}}"
+    if (-not $substs.ContainsKey("MCP_HUB_V12_VENV_PYTHON")) {
+        $substs["MCP_HUB_V12_VENV_PYTHON"] = "{{MCP_HUB_V12_VENV_PYTHON}}"
     }
     foreach ($key in @($substs.Keys)) {
         $value = [string]$substs[$key]

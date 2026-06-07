@@ -30,7 +30,7 @@ The `Test-PluginBuilt` check skips rebuild if `dist/index.js` is newer than all 
 For each MCP in the config:
 
 - **filesystem**: detects Python 3.11+ in standard locations, uses it directly (no venv). Default: `C:/Program Files/Python311/python.exe`.
-- **yari-mcp-v8**: creates a venv at the path specified by `MCP_HUB_V8_VENV_PATH` in `.env`, then pip installs from `MCP_HUB_V8_REQUIREMENTS`.
+- **memory-gateway (MCP Hub V12)**: creates a venv at the path specified by `MCP_HUB_V12_VENV_PATH` in `.env`, then pip installs from `MCP_HUB_V12_REQUIREMENTS`. The entry point is `<MCP_HUB_V12_REPO_PATH>/core/mcp_stdio.py`.
 
 If a specific MCP setup fails, the script logs and continues with the others (per spec: never fail the whole install for one MCP). The final `verify` step will surface the broken MCP.
 
@@ -47,7 +47,7 @@ Placeholders:
 - `{{SCHEMA}}` — `https://opencode.ai/config.json`
 - `{{PLUGIN_PATH}}` — the actual path of the plugin's `dist/index.js` in this repo, passed from `setup.ps1` (after backslash normalization)
 - `{{PYTHON_EXE}}` — default `C:/Program Files/Python311/python.exe` (overridable via `.env`)
-- `{{MCP_HUB_V8_VENV_PYTHON}}` and `{{MCP_HUB_V8_SERVER_PY}}` — required, must be in `.env` (otherwise setup fails loud with "unsubstituted placeholder" error)
+- `{{MCP_HUB_V12_REPO_PATH}}`, `{{MCP_HUB_V12_VENV_PYTHON}}` — required, must be in `.env` (otherwise setup fails loud with "unsubstituted placeholder" error)
 
 ## Step 5: Verify
 

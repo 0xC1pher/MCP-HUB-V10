@@ -57,7 +57,7 @@ setup.ps1
 ├── Print banner
 ├── Prereq check (fail loud)
 ├── Step 1: Build plugin (skip if dist/ is fresh)
-├── Step 2: Setup MCPs (per-MCP; filesystem uses system Python, yari-mcp-v8 uses a venv)
+├── Step 2: Setup MCPs (per-MCP; filesystem uses system Python, memory-gateway uses a venv)
 ├── Step 3: Install skills (recursive copy with SHA-256 check; preserves skill-name/SKILL.md structure)
 ├── Step 4: Render config.json (skip if byte-for-byte match; normalize \ to /)
 └── Step 5: Verify (health check, return Ok or list of failures)

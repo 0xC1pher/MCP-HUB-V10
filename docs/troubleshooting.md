@@ -60,15 +60,15 @@ The script tries `C:/Program Files/Python311/python.exe` first (the typical inst
 - Make sure it's on PATH (check "Add to PATH" during install)
 - Or set `PYTHON_EXE` in `bootstrap/.env` to your Python's full path (use forward slashes or backslashes — both work; they're normalized)
 
-## "yari-mcp-v8 setup failed"
+## "memory-gateway setup failed"
 
-This MCP requires specific paths. Set these in `bootstrap/.env`:
+This MCP (MCP Hub V12, repo `0xC1pher/MCP-HUB-V11`) requires specific paths. Set these in `bootstrap/.env`:
 
 ```
-MCP_HUB_V8_VENV_PATH=C:/path/to/where/you/want/the/venv
-MCP_HUB_V8_VENV_PYTHON=C:/path/to/where/you/want/the/venv/Scripts/python.exe
-MCP_HUB_V8_SERVER_PY=C:/path/to/mcp-hub-v8/src/server.py
-MCP_HUB_V8_REQUIREMENTS=C:/path/to/mcp-hub-v8/requirements.txt
+MCP_HUB_V12_REPO_PATH=C:/path/to/where/you/cloned/mcp-hub-v12
+MCP_HUB_V12_VENV_PATH=C:/path/to/where/you/want/the/venv
+MCP_HUB_V12_VENV_PYTHON=C:/path/to/where/you/want/the/venv/Scripts/python.exe
+MCP_HUB_V12_REQUIREMENTS=C:/path/to/where/you/cloned/mcp-hub-v12/requirements.txt
 ```
 
 If the source isn't available, the script continues with a warning. OpenCode will fail to start that MCP, but other config is intact.
