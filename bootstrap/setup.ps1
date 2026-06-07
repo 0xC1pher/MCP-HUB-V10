@@ -58,13 +58,16 @@ $mcps = @{
         venvPath = $null
         requirementsPath = $null
     }
-    "yari-mcp-v8" = @{
-        venvPath = $substs["MCP_HUB_V8_VENV_PATH"]
-        requirementsPath = $substs["MCP_HUB_V8_REQUIREMENTS"]
+    "memory-gateway" = @{
+        venvPath = $substs["MCP_HUB_V12_VENV_PATH"]
+        requirementsPath = $substs["MCP_HUB_V12_REQUIREMENTS"]
     }
 }
+# Collect per-MCP status so the post-install banner can summarize instead of
+# forcing operators to scrape the log file.
+$mcpResults = @()
 foreach ($name in $mcps.Keys) {
-    Setup-MCP -Name $name -Config $mcps[$name]
+    $mcpResults += Setup-MCP -Name $name -Config $mcps[$name]
 }
 
 # Step 3: Install skills
@@ -74,7 +77,10 @@ Install-Skills -SourceDir $skillsSource -DestinationDir $skillsDest
 
 # Step 4: Render config
 $tmpl = Join-Path $repoRoot "templates/config.json.tmpl"
-$configOut = Join-Path $env:USERPROFILE ".opencode/config.json"
+# OpenCode reads its user config from %USERPROFILE%\.config\opencode\ on
+# Windows (XDG-style). The legacy ~/.opencode/config.json path was a
+# bootstrap bug that left users with a config opencode never loaded.
+$configOut = Join-Path $env:USERPROFILE ".config/opencode/opencode.json"
 
 # Compute the rendered content for idempotency check
 $renderedContent = Get-Content -LiteralPath $tmpl -Raw
@@ -99,12 +105,23 @@ if ($result.Ok) {
     Write-Host "  Plugin: $pluginDir" -ForegroundColor Green
     Write-Host "  Skills: $skillsDest" -ForegroundColor Green
     Write-Host "  Log:    $(Join-Path $repoRoot 'bootstrap/setup.log')" -ForegroundColor Green
+    Write-Host "  MCPs:   $($mcpResults.Count) configured" -ForegroundColor Green
+    foreach ($m in $mcpResults) {
+        $status = if ($m.Ok) { "OK" } else { "FAILED" }
+        $color = if ($m.Ok) { "Green" } else { "Yellow" }
+        Write-Host "          - $($m.Name): $status" -ForegroundColor $color
+    }
     Write-Host "==================================================" -ForegroundColor Green
 } else {
     Write-Host ""
     Write-Host "Setup completed with failures:" -ForegroundColor Red
     foreach ($f in $result.Failures) {
         Write-Host "  - $f" -ForegroundColor Red
+    }
+    foreach ($m in $mcpResults) {
+        if (-not $m.Ok) {
+            Write-Host "  - MCP $($m.Name): $($m.Error)" -ForegroundColor Red
+        }
     }
     exit 1
 }
