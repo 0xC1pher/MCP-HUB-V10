@@ -24,8 +24,11 @@ except (OSError, AttributeError):
 sys.stdout = sys.stderr
 
 # Setup simple debug log
-log_file = Path(r"C:\Users\Admin\Desktop\workspace\HUB\logs\stdio_debug.log")
-log_file.parent.mkdir(exist_ok=True)
+# Derive the log path from the script location so this works from any clone
+# (was hardcoded to the original developer's workspace, which broke on every
+# other machine). Logs now land at <repoRoot>/logs/stdio_debug.log.
+log_file = Path(__file__).resolve().parent.parent / "logs" / "stdio_debug.log"
+log_file.parent.mkdir(parents=True, exist_ok=True)
 def dlog(msg):
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(msg + "\n")
